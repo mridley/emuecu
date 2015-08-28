@@ -1,0 +1,39 @@
+Inputs
+
+INT0/PD2 - HAL Effect
+INT1/PD3 - PWM servo input
+
+AN7      - Air Pressure Sensor #2
+AN6      - Oxygen Sensor
+AN3/PC3  - Fuel Pressure Sensor
+AN2/PC2  - Air Pressure Sensor
+AN1/PC1  - Air Temp
+AN0/PC0  - Engine Temp
+
+Low current outputs
+
+OC0A/PD5 - PWM output to load control
+OC0B/PD6 - PWM output to throttle servo
+OC1A/PB1 - Ignition
+
+High Current Outputs
+
+OC1B/PB2 - Fuel Injector
+OC2A/PB3 - Fuel pump (PWM)
+PB4      - Cooling Fan
+
+Unused
+
+PD4
+PD7
+
+PB0
+
+Analogue/I2C
+
+AN5/PC5/SCL
+AN4/PC4/SDA
+
+
+PB5 - LED
+
