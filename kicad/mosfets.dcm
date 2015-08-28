@@ -1,0 +1,7 @@
+EESchema-DOCLIB  Version 2.0
+#
+$CMP IRL540N
+D IRL540N, 100V Vds, 36A Id, Logic Level HEXFET N-Channel MOSFET, TO220
+K Logic Level HEXFET N-Channel MOSFET
+F http://www.irf.com/product-info/datasheets/data/irl540n.pdf
+$ENDCMP
