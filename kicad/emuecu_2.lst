@@ -1,0 +1,132 @@
+eeschema (2013-jul-07)-stable  >> Creation date: Sat 31 Oct 2015 00:17:40 AEDT
+#Cmp ( order = Reference )
+| C1         4.7uF       
+| C2         0.1 uF      
+| C3         0.1uF       
+| C4         0.1uF       
+| C5         0.1uF       
+| C6         15pf        
+| D1         1N5822      
+| D2         1N4002      
+| D3         FR304       
+| D4         FR304       
+| D5         BAT48       
+| D6         BAT48       
+| D7         BAT48       
+| D8         BAT48       
+| D9         BAT48       
+| D10        BAT48       
+| IC1        6N138       
+| L1         2.2uH       
+| L2         2.2uH       
+| L3         47uH        
+| L4         47uH        
+| P1         INJECTOR    
+| P2         FAN         
+| P3         IGNITION    
+| P4         THROTTLE    
+| P5         LOAD        
+| P6         SERVO       
+| P7         HALL        
+| P8         ENGINE_TEMP 
+| P9         POWER       
+| Q1         IRL540N     
+| Q2         IRL540N     
+| R1         50K         
+| R2         1K          
+| R3         50K         
+| R4         1K          
+| R5         500         
+| R6         300         
+| R7         2.2K        
+| R8         150         
+| R9         500         
+| R10        150         
+| R11        500         
+| R12        20K         
+| R13        10k         
+| R14        1k          
+| R15        10K         
+| R16        10k         
+| R17        1k          
+| R18        10k         
+| R19        1k          
+| R20        5k          
+| R21        240         
+| R?         220         
+| T4         TVS(1.5KE16CA)
+| U1         ARDUINO_NANO
+| Z1         1N5365B     
+| Z2         IN4732 (4.7V)
+| Z3         1N4733      
+| Z4         1N4733      
+| Z5         1N4733      
+| Z6         1N4733      
+#End Cmp
+
+#Cmp ( order = Value )
+| 15pf         C6        
+| 0.1uF        C3        
+| 0.1 uF       C2        
+| 220          R?        
+| 0.1uF        C4        
+| 0.1uF        C5        
+| 4.7uF        C1        
+| 1N5822       D1        
+| 1N4002       D2        
+| FR304        D3        
+| FR304        D4        
+| BAT48        D5        
+| BAT48        D6        
+| BAT48        D7        
+| BAT48        D8        
+| BAT48        D9        
+| BAT48        D10       
+| 6N138        IC1       
+| 2.2uH        L1        
+| 2.2uH        L2        
+| 47uH         L3        
+| 47uH         L4        
+| INJECTOR     P1        
+| FAN          P2        
+| IGNITION     P3        
+| THROTTLE     P4        
+| LOAD         P5        
+| SERVO        P6        
+| HALL         P7        
+| ENGINE_TEMP  P8        
+| POWER        P9        
+| IRL540N      Q1        
+| IRL540N      Q2        
+| 150          R8        
+| 150          R10       
+| 240          R21       
+| 300          R6        
+| 500          R5        
+| 500          R9        
+| 500          R11       
+| 1K           R2        
+| 1K           R4        
+| 1k           R14       
+| 1k           R17       
+| 1k           R19       
+| 2.2K         R7        
+| 5k           R20       
+| 10k          R13       
+| 10K          R15       
+| 10k          R16       
+| 10k          R18       
+| 20K          R12       
+| 50K          R1        
+| 50K          R3        
+| TVS(1.5KE16CA) T4        
+| ARDUINO_NANO U1        
+| 1N5365B      Z1        
+| IN4732 (4.7V) Z2        
+| 1N4733       Z3        
+| 1N4733       Z4        
+| 1N4733       Z5        
+| 1N4733       Z6        
+#End Cmp
+
+#End List
