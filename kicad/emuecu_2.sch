@@ -1,4 +1,5 @@
 EESchema Schematic File Version 2
+LIBS:arduino
 LIBS:decent
 LIBS:power
 LIBS:device
@@ -30,7 +31,7 @@ LIBS:opto
 LIBS:atmel
 LIBS:contrib
 LIBS:valves
-LIBS:emuecu_2-cache
+LIBS:mosfets
 EELAYER 27 0
 EELAYER END
 $Descr A4 11693 8268

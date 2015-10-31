@@ -1,5 +1,5 @@
 PRG            = ecu
-OBJ            = ecu.o uart.o
+OBJ            = ecu.o uart.o timers.o inputs.o
 MCU_TARGET     = atmega328p
 OPTIMIZE       = -O2
 #AVRDUDE_PORT   = /dev/serial/by-id/usb-FTDI_FT232R_USB_UART_A602QP81-if00-port0
@@ -16,7 +16,7 @@ CC             = avr-gcc
 
 # Override is only needed by avr-lib build system.
 
-override CFLAGS        = -g -Wall $(OPTIMIZE) -mmcu=$(MCU_TARGET) $(DEFS)
+override CFLAGS        = -g -std=c99 -Wall $(OPTIMIZE) -mmcu=$(MCU_TARGET) $(DEFS)
 override LDFLAGS       = -Wl,-Map,$(PRG).map
 
 OBJCOPY        = avr-objcopy
