@@ -19,16 +19,27 @@ inline uint32_t tcnt1_long_()
 
 inline uint32_t tcnt1_us_()
 {
-  return (tcnt1_() >> 1) + (timer_1_ovf_ << 15);
+  uint8_t ovf;
+  uint16_t tcnt1;
+
+  do
+  {
+    //loop in case TOV1 changes while reading TCNT1
+    ovf = TIFR1 & _BV(TOV1);
+    tcnt1 = tcnt1_();
+  }while (ovf  != (TIFR1 & _BV(TOV1)) );
+
+  return (uint32_t)(tcnt1 >> 1) | ((timer_1_ovf_ + ovf) << 15);
 }
 
-inline uint16_t tcnt0_()
+inline uint8_t tcnt0_()
 {
-  uint16_t cnt = TCNT0;
+  uint8_t cnt = TCNT0;
   return cnt;
 }
 
 void setup_timers();
+void set_pwm(uint8_t c, uint16_t v);
 
 uint32_t ticks_us();
 uint16_t ticks_ms();
