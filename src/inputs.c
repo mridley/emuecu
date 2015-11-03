@@ -166,20 +166,20 @@ ISR(ADC_vect)
 
 void setup_int0()
 {
-  DDRD  |= _BV(PD2);  // Set PD2 as input (Using for interupt INT0)
-  PORTD |= _BV(PD2);  // enable internal pullup
+  DDRD  &= ~_BV(PD2);  // Set PD2 as input (Using for interupt INT0)
+  //PORTD |= _BV(PD2);  // enable internal pullup
 
   EIMSK |= _BV(INT0); // Enable INT0
 
   EICRA |= 0<<ISC01 | 1<<ISC00;	// Trigger INT0 on any edge
 
-  // PORTD &= _BV(PD7);
+  DDRD |= _BV(PD7); // SET PD7 as ignition output
 }
 
 void setup_int1()
 {
-  DDRD  |= _BV(PD3); // Set PD3 as input (Using for interupt INT1)
-  PORTD |= _BV(PD3); // enable internal pullup
+  DDRD  &= ~_BV(PD3); // Set PD3 as input (Using for interupt INT1)
+  //PORTD |= _BV(PD3); // enable internal pullup
 
   EIMSK |= _BV(INT1); // Enable INT1
 

@@ -37,6 +37,11 @@ void setup_timer0()
 
   // set prescaler and start the timer
   TCCR0B |= _BV(CS01) | _BV(CS00); // 64 (4us per tick)
+
+  // TODO: move this elseware
+  DDRD |= _BV(PD5); // SET PD5 as PWM A output
+  DDRD |= _BV(PD6); // SET PD6 as PWM B output
+
 }
 
 ISR(TIMER0_OVF_vect)  // timer0 overflow interrupt
