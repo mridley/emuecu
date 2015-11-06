@@ -8,8 +8,12 @@
 #include "inputs.h"
 #include "timers.h"
 
+// pwm
+volatile uint32_t pwm_ticks_us_ = 0;
 volatile uint16_t pwm_val_ = 0;
+volatile uint16_t pwm_filtered_val_ = 0;
 volatile uint16_t pwm_period_ = 0;
+volatile uint8_t  pwm_change_ = 0;
 
 // we only use 1 channel
 const uint8_t     adc_num_chan_ = 1;
@@ -22,25 +26,15 @@ volatile uint32_t crank_ticks_us_ = 0;
 volatile uint8_t  rpm_uptodate_ = 0;
 int16_t           current_rpm_ = 0;
 const uint32_t    CRANK_TIMEOUT_USECS = 100000UL;
+const uint32_t    PWM_TIMEOUT_USECS = 100000UL;
 
 // Ignition passthrough
 uint8_t           ignition_enabled_ = 0;
+#define           IGN_OUT_PORTD PD4
+#define           IGN_IN_PORTD  PD2
+#define           PWM_IN_PORTD  PD3
 
-void start_adc();
-
-int16_t analogue(uint8_t ch)
-{
-  int16_t v = -1;
-  while(!adc_complete_){}
-  ATOMIC_BLOCK(ATOMIC_FORCEON)
-  {
-    if ( ch < adc_num_chan_ )
-    {
-      v = adc[ch&0x7];
-    }
-  }
-  return v;
-}
+// ----- CRANK -----
 
 uint32_t crank_ticks_us()
 {
@@ -67,15 +61,18 @@ uint16_t rpm()
       current_rpm_ = (uint16_t)(60/(1e-6*tpr));
     }
   }
-  uint32_t ct = crank_ticks_us();
-  uint32_t ticks = ticks_us();
-  int32_t dt = ticks - ct;
-  if (dt > CRANK_TIMEOUT_USECS)
+  if (current_rpm_)
   {
-    current_rpm_ = 0;
-    ATOMIC_BLOCK(ATOMIC_FORCEON)
+    uint32_t ct = crank_ticks_us();
+    uint32_t ticks = ticks_us();
+    int32_t dt = ticks - ct;
+    if (dt > CRANK_TIMEOUT_USECS)
     {
-      ticks_per_rev_us_ = 0;
+      current_rpm_ = 0;
+      ATOMIC_BLOCK(ATOMIC_FORCEON)
+      {
+        ticks_per_rev_us_ = 0;
+      }
     }
   }
   return current_rpm_;
@@ -94,7 +91,7 @@ void ignition_enable()
 void ignition_disable()
 {
   ignition_enabled_ = 0;
-  PORTD |= _BV(PD7); // set high
+  PORTD |= _BV(IGN_OUT_PORTD); // set high
 }
 
 // crank interrupt
@@ -102,13 +99,13 @@ ISR(INT0_vect)
 {
   static uint8_t fall_ = 0;
 
-  uint32_t now_us = tcnt1_us_();
+  uint32_t now_us = tcnt2_us_();
 
-  if (!(PIND & _BV(PD2)))
+  if (!(PIND & _BV(IGN_IN_PORTD)))
   {
     if (ignition_enabled_)
     {
-      PORTD &= ~_BV(PD7); // follow low
+      PORTD &= ~_BV(IGN_OUT_PORTD); // follow low
     }
     if (fall_)
     {
@@ -120,32 +117,110 @@ ISR(INT0_vect)
   }
   else if (ignition_enabled_)
   {
-    PORTD |= _BV(PD7); // follow high
+    PORTD |= _BV(IGN_OUT_PORTD); // follow high
   }
+}
+
+void setup_int0()
+{
+  DDRD  &= ~_BV(IGN_IN_PORTD);  // Set PD2 as input (Using for interupt INT0)
+  //PORTD |= _BV(IGN_IN_PORTD);  // not required, external pullup
+
+  EIMSK |= _BV(INT0); // Enable INT0
+
+  EICRA |= 0<<ISC01 | 1<<ISC00;	// Trigger INT0 on any edge
+
+  DDRD |= _BV(IGN_OUT_PORTD); // SET IGNITION_PORT as ignition output
+}
+
+// ----- PWM -----
+
+inline uint16_t filter_pwm(uint16_t curr, uint16_t sample)
+{
+  // assumes < 16384
+  return (curr + curr + curr + sample) >> 2;
 }
 
 // pwm input
 ISR(INT1_vect)
 {
-  static uint8_t rise_ = 0;
+  static uint8_t  rise_ = 0;
   static uint16_t rise_t_ = 0;
 
-  uint16_t now_1us = (uint16_t)tcnt1_us_();
+  uint32_t now_1us = tcnt2_us_();
 
-  if (PIND & _BV(PD3))
+  if (PIND & _BV(PWM_IN_PORTD))
   {
     if (rise_)
     {
-      pwm_period_ = (now_1us - rise_t_);
+      pwm_period_ = ((uint16_t)now_1us - rise_t_);
     }
     rise_ = 1;
     rise_t_ = now_1us;
   }
   else if (rise_)
   {
-    pwm_val_ = (now_1us - rise_t_);
+    pwm_ticks_us_ = now_1us;
+    pwm_val_ = ((uint16_t)now_1us - rise_t_);
+    pwm_change_ = 1;
+    if (pwm_filtered_val_)
+    {
+      pwm_filtered_val_ = filter_pwm(pwm_filtered_val_, pwm_val_);
+    }
+    else
+    {
+      pwm_filtered_val_ = pwm_val_; // first iteration
+    }
   }
 }
+
+uint32_t pwm_ticks_us()
+{
+  uint32_t ct;
+  ATOMIC_BLOCK(ATOMIC_FORCEON)
+  {
+    ct = pwm_ticks_us_;
+  }
+  return ct;
+}
+
+uint16_t pwm_input()
+{
+  static uint16_t pwm_val = 0;
+
+  if (pwm_change_)
+  {
+    ATOMIC_BLOCK(ATOMIC_FORCEON)
+    {
+      pwm_val = pwm_filtered_val_;
+      pwm_change_ = 0;
+    }
+  }
+  else if (pwm_val)
+  {
+    uint32_t ct = pwm_ticks_us();
+    uint32_t ticks = ticks_us();
+    int32_t dt = ticks - ct;
+    if (dt > PWM_TIMEOUT_USECS)
+    {
+      pwm_val = pwm_val_ = pwm_filtered_val_ = 0;
+    }
+  }
+
+  return pwm_val;
+}
+
+void setup_int1()
+{
+  DDRD  &= ~_BV(PWM_IN_PORTD); // Set PD3 as input (Using for interupt INT1)
+  PORTD |= _BV(PWM_IN_PORTD); // enable internal pullup (no external pullup)
+
+  EIMSK |= _BV(INT1); // Enable INT1
+
+  EICRA |= 0<<ISC11 | 1<<ISC10;	// Trigger INT1 on any edge
+}
+
+// ----- ADC -----
 
 ISR(ADC_vect)
 {
@@ -164,27 +239,6 @@ ISR(ADC_vect)
   }
 }
 
-void setup_int0()
-{
-  DDRD  &= ~_BV(PD2);  // Set PD2 as input (Using for interupt INT0)
-  //PORTD |= _BV(PD2);  // enable internal pullup
-
-  EIMSK |= _BV(INT0); // Enable INT0
-
-  EICRA |= 0<<ISC01 | 1<<ISC00;	// Trigger INT0 on any edge
-
-  DDRD |= _BV(PD7); // SET PD7 as ignition output
-}
-
-void setup_int1()
-{
-  DDRD  &= ~_BV(PD3); // Set PD3 as input (Using for interupt INT1)
-  //PORTD |= _BV(PD3); // enable internal pullup
-
-  EIMSK |= _BV(INT1); // Enable INT1
-
-  EICRA |= 0<<ISC11 | 1<<ISC10;	// Trigger INT1 on any edge
-}
 
 void setup_adc()
 {
@@ -210,14 +264,18 @@ void start_adc()
   ADCSRA |= _BV(ADSC); // start conversion
 }
 
-uint16_t pwm_input()
+int16_t analogue(uint8_t ch)
 {
-  uint16_t pwm_val;
+  int16_t v = -1;
+  while(!adc_complete_){}
   ATOMIC_BLOCK(ATOMIC_FORCEON)
   {
-    pwm_val = pwm_val_;
+    if ( ch < adc_num_chan_ )
+    {
+      v = adc[ch&0x7];
+    }
   }
-  return pwm_val;
+  return v;
 }
 
 void setup_inputs()

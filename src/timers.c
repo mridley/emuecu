@@ -7,11 +7,13 @@
 #include "timers.h"
 #include "inputs.h"
 
-volatile uint32_t timer_0_1ms_ = 0;
 volatile uint32_t timer_1_ovf_ = 0;
+volatile uint32_t timer_2_500us_ = 0;
 volatile uint32_t timer_2_ovf_ = 0;
 
-uint16_t pwm_[2] = {0, 0};
+uint16_t pwm_[2] = {1500, 1500};
+uint8_t inj_ticks_ = 0;
+uint8_t pump_enabled_ = 0;
 
 void set_pwm(uint8_t c, uint16_t v)
 {
@@ -22,26 +24,23 @@ void set_pwm(uint8_t c, uint16_t v)
   }
 }
 
-void schedule_pwm_();
-
 void setup_timer0()
 {
-  // Set the Timer Mode to CTC
-  TCCR0A |= _BV(WGM01);
+  // Set the Timer Mode to Normal
+  TCCR0A = 0;
 
   // Set the value that you want to count to
-  OCR0A = 0xFA;
+  OCR0A = 0; //
+  OCR0B = 0; //
 
-  //Set the ISR COMPA vect
-  TIMSK0 |= _BV(OCIE0A);
+  //Set the ISR COMPB vect
+  TIMSK0 |= _BV(OCIE0B);
+
+  // enable the output of the two OC0x ports PD5 PD6
+  DDRD |= (_BV(PD6) | _BV(PD5));
 
   // set prescaler and start the timer
-  TCCR0B |= _BV(CS01) | _BV(CS00); // 64 (4us per tick)
-
-  // TODO: move this elseware
-  DDRD |= _BV(PD5); // SET PD5 as PWM A output
-  DDRD |= _BV(PD6); // SET PD6 as PWM B output
-
+  TCCR0B |= _BV(CS02) | _BV(CS00); // 1024 (64us per tick)
 }
 
 ISR(TIMER0_OVF_vect)  // timer0 overflow interrupt
@@ -49,58 +48,54 @@ ISR(TIMER0_OVF_vect)  // timer0 overflow interrupt
   // nothing
 }
 
-ISR(TIMER0_COMPA_vect)  // timer0 compa interrupt
+void do_injection()
 {
-  timer_0_1ms_++;
-  // every 16ms begin a new PWM cycle
-  if (!(timer_0_1ms_ & 0xf))
+  if (inj_ticks_)
   {
-    schedule_pwm_();
+    PORTD |= _BV(PD6); // Injector on
+    OCR0A = TCNT1 + inj_ticks_; // set delay
+    // enable the OC interrupt
+    TIMSK0 |= _BV(OCIE0A);
   }
 }
+
+ISR(TIMER0_COMPA_vect)  // timer0 compa interrupt
+{
+  PORTD &= ~_BV(PD6);     // Injector off
+  TIMSK0 &= ~_BV(OCIE0A); // disable until next time
+}
+
 
 ISR(TIMER0_COMPB_vect)  // timer0 compb interrupt
 {
-  // nothing
-}
-
-void schedule_pwm_()
-{
-  uint16_t ticks;
-  uint16_t trigger;
-
-  // PWM A
-  if (pwm_[0])
+  if (PORTD & _BV(PD5))
   {
-    PORTD |= _BV(PD5); // PWM A high
-    ticks = tcnt1_();
-    trigger = ticks + (pwm_[0] << 1);
-    OCR1AH = (uint8_t)(trigger >> 8);
-    OCR1AL = (uint8_t)(trigger & 0xf);
-    // enable the OC interrupt
-    TIMSK1 |= _BV(OCIE1A);
+    PORTD &= ~_BV(PD5);     // Pump off
+    OCR0B = TCNT1 + 2;
   }
-
-  // PWM B
-  if (pwm_[1])
+  else if (pump_enabled_)
   {
-    PORTD |= _BV(PD6); // PWM B high
-    ticks = tcnt1_();
-    trigger = ticks + (pwm_[1] << 1);
-    OCR1BH = (uint8_t)(trigger >> 8);
-    OCR1BL = (uint8_t)(trigger & 0xf);
-    // enable the OC interrupt
-    TIMSK1 |= _BV(OCIE1B);
+    PORTD |= _BV(PD5);
+    OCR0B = TCNT1 + 3;
   }
 }
 
 void setup_timer1()
 {
-  // Set the Timer Mode to CTC
-  TCCR1B = 0; // Normal
+  // Enable OC1x Non inverting mode
+  TCCR1A = _BV(COM1A1) | _BV(COM1B1) | _BV(WGM11);
+  // Set the Timer Mode to Fast PWM using ICR1 as TOP
+  TCCR1B = _BV(WGM13) | _BV(WGM12);
+
+  // Set the TOP value to 29999 ( 15ms @ 2MHz)
+  ICR1H = 0x75;
+  ICR1L = 0x2f;
 
   // Set the ISR Overflow vect
   TIMSK1 |= _BV(TOIE1);
+
+  // enable the output of the two OC1x ports PB1 PB2
+  DDRB |= _BV(PB1) | _BV(PB2);
 
   // set prescaler and start the timer
   TCCR1B |= _BV(CS11); // 8 (500ns per tick)
@@ -109,18 +104,15 @@ void setup_timer1()
 ISR(TIMER1_OVF_vect)  // timer1 overflow interrupt
 {
   timer_1_ovf_++;
-}
 
-ISR(TIMER1_COMPA_vect)  // timer1 compa interrupt
-{
-  PORTD &= ~_BV(PD5);     // PWM A low
-  TIMSK1 &= ~_BV(OCIE1A); // disable until next time
-}
+  uint16_t pwm;
+  pwm = (pwm_[0] << 1);
+  OCR1AH = (uint8_t)(pwm >> 8);
+  OCR1AL = (uint8_t)(pwm & 0xff);
 
-ISR(TIMER1_COMPB_vect)  // timer1 compb interrupt
-{
-  PORTD &= ~_BV(PD6);     // PWM B low
-  TIMSK1 &= ~_BV(OCIE1B); // disable until next time
+  pwm = (pwm_[1] << 1);
+  OCR1BH = (uint8_t)(pwm >> 8);
+  OCR1BL = (uint8_t)(pwm & 0xff);
 }
 
 void setup_timer2()
@@ -128,11 +120,14 @@ void setup_timer2()
   // Set the Timer Mode to normal
   TCCR2A = 0;
 
-  // enable all 3 ISR
-  TIMSK2 |= _BV(TOIE2) | _BV(OCIE2A) | _BV(OCIE2B);
+  // Set the value that you want to count to
+  OCR2A = 0xF9; // 249
+
+  // enable ISR
+  TIMSK2 |= _BV(TOIE2) | _BV(OCIE2A);
 
   // set prescaler and start the timer
-  TCCR2B |= _BV(CS22); // 64 (4us per tick)
+  TCCR2B |= _BV(CS21) | _BV(CS20); // 32 (2us per tick)
 }
 
 ISR(TIMER2_OVF_vect)  // timer2 overflow interrupt
@@ -142,10 +137,8 @@ ISR(TIMER2_OVF_vect)  // timer2 overflow interrupt
 
 ISR(TIMER2_COMPA_vect)  // timer2 compa interrupt
 {
-}
-
-ISR(TIMER2_COMPB_vect)  // timer2 compb interrupt
-{
+  timer_2_500us_++;
+  OCR2A += 0xFA; // ++ 250
 }
 
 void setup_timers()
@@ -157,12 +150,12 @@ void setup_timers()
 
 uint16_t ticks_ms()
 {
-  uint16_t ta;
+  uint32_t ta;
   ATOMIC_BLOCK(ATOMIC_FORCEON)
   {
-    ta = (uint16_t)timer_0_1ms_;
+    ta = timer_2_500us_;
   }
-  return ta;
+  return (uint16_t)(ta >> 1);
 }
 
 uint32_t ticks_us()
@@ -170,7 +163,7 @@ uint32_t ticks_us()
   uint32_t ticks;
   ATOMIC_BLOCK(ATOMIC_FORCEON)
   {
-    ticks = tcnt1_us_();
+    ticks = tcnt2_us_();
   }
   return ticks;
 }

@@ -3,7 +3,8 @@ OBJ            = ecu.o uart.o timers.o inputs.o
 MCU_TARGET     = atmega328p
 OPTIMIZE       = -O2
 #AVRDUDE_PORT   = /dev/serial/by-id/usb-FTDI_FT232R_USB_UART_A602QP81-if00-port0
-AVRDUDE_PORT   = /dev/serial/by-id/usb-FTDI_FT232R_USB_UART_A602K6GX-if00-port0
+#AVRDUDE_PORT   = /dev/serial/by-id/usb-FTDI_FT232R_USB_UART_A602K6GX-if00-port0
+AVRDUDE_PORT   = /dev/serial/by-id/usb-1a86_USB2.0-Serial-if00-port0
 
 AVRDUDE_DEVICE = arduino
 
