@@ -40,7 +40,7 @@ void setup_timer0()
   DDRD |= (_BV(PD6) | _BV(PD5));
 
   // set prescaler and start the timer
-  TCCR0B |= _BV(CS02) | _BV(CS00); // 1024 (64us per tick)
+  TCCR0B |= _BV(CS02); // 256 (16us per tick)
 }
 
 ISR(TIMER0_OVF_vect)  // timer0 overflow interrupt
@@ -48,14 +48,20 @@ ISR(TIMER0_OVF_vect)  // timer0 overflow interrupt
   // nothing
 }
 
+void set_injection_us(uint16_t dur)
+{
+  inj_ticks_ = (uint8_t)(dur >> 4);
+}
+
 void do_injection()
 {
   if (inj_ticks_)
   {
     PORTD |= _BV(PD6); // Injector on
-    OCR0A = TCNT1 + inj_ticks_; // set delay
+    OCR0A = TCNT0 + inj_ticks_; // set delay
     // enable the OC interrupt
     TIMSK0 |= _BV(OCIE0A);
+    TIFR0 |= _BV(OCF0A); // clear interrupt flag
   }
 }
 
@@ -65,18 +71,27 @@ ISR(TIMER0_COMPA_vect)  // timer0 compa interrupt
   TIMSK0 &= ~_BV(OCIE0A); // disable until next time
 }
 
+void pump_enable()
+{
+  pump_enabled_ = 1;
+}
+
+void pump_disable()
+{
+  pump_enabled_ = 0;
+}
 
 ISR(TIMER0_COMPB_vect)  // timer0 compb interrupt
 {
   if (PORTD & _BV(PD5))
   {
     PORTD &= ~_BV(PD5);     // Pump off
-    OCR0B = TCNT1 + 2;
+    OCR0B = TCNT0 + 2;
   }
   else if (pump_enabled_)
   {
     PORTD |= _BV(PD5);
-    OCR0B = TCNT1 + 3;
+    OCR0B = TCNT0 + 3;
   }
 }
 

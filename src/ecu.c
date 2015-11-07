@@ -15,6 +15,8 @@
 #define RPM_LIMIT  17000
 #define DWELL_TIME_MS 2000
 
+#define INJ_TIME_US 2500
+
 
 #define CLAMP(v, min, max)\
   v = (v > max) ? max : ((v < min) ? min : v );
@@ -57,6 +59,8 @@ int main(void)
       if (curr_rpm > 0 && (ticks_ms() - engine_stop_ms) > DWELL_TIME_MS)
       {
         ignition_enable();
+        pump_enable();
+        set_injection_us(INJ_TIME_US);
         printf("engine start\n");
       }
     }
@@ -66,12 +70,16 @@ int main(void)
       {
         printf("overrev - forced engine stop\n");
         ignition_disable();
+        pump_disable();
+        set_injection_us(0);
         engine_stop_ms = ticks_ms();
       }
       if (!curr_rpm)
       {
         printf("engine has stopped\n");
         ignition_disable();
+        pump_disable();
+        set_injection_us(0);
       }
     }
 

@@ -106,6 +106,7 @@ ISR(INT0_vect)
     if (ignition_enabled_)
     {
       PORTD &= ~_BV(IGN_OUT_PORTD); // follow low
+      do_injection(); // turns on injecter, set up interrupt to turn it off
     }
     if (fall_)
     {

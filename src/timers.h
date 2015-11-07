@@ -1,6 +1,8 @@
 #ifndef _TIMERS_H_
 #define _TIMERS_H_
 
+#include <stdint.h>
+
 extern volatile uint32_t timer_0_1ms_;
 extern volatile uint32_t timer_1_ovf_;
 extern volatile uint32_t timer_2_ovf_;
@@ -22,6 +24,10 @@ inline uint32_t tcnt2_us_()
 
 void setup_timers();
 void set_pwm(uint8_t c, uint16_t v);
+void set_injection_us(uint16_t dur);
+void do_injection();
+void pump_enable();
+void pump_disable();
 
 uint32_t ticks_us();
 uint16_t ticks_ms();
