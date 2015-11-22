@@ -10,8 +10,10 @@
 #include "timers.h"
 #include "inputs.h"
 
-#define PWM_MIN    800
-#define PWM_MAX    2400
+//#define PWM_MIN    800
+#define PWM_MIN    955
+//#define PWM_MAX    2400
+#define PWM_MAX    1740
 #define RPM_LIMIT  17000
 #define DWELL_TIME_MS 2000
 

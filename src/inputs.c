@@ -98,15 +98,23 @@ void ignition_disable()
 ISR(INT0_vect)
 {
   static uint8_t fall_ = 0;
+  static uint8_t prev_ = 0;
 
   uint32_t now_us = tcnt2_us_();
 
-  if (!(PIND & _BV(IGN_IN_PORTD)))
+  uint8_t is_high = !(PIND & _BV(IGN_IN_PORTD)); // input is now inverted
+
+  if (is_high == prev_)
+  {
+    return; // false trigger
+  }
+  prev_ = is_high;
+  if (!is_high)
   {
     if (ignition_enabled_)
     {
       PORTD &= ~_BV(IGN_OUT_PORTD); // follow low
-      do_injection(); // turns on injecter, set up interrupt to turn it off
+      do_injection(); // turns on injector, set up interrupt to turn it off
     }
     if (fall_)
     {
@@ -147,10 +155,19 @@ ISR(INT1_vect)
 {
   static uint8_t  rise_ = 0;
   static uint16_t rise_t_ = 0;
+  static uint8_t  prev_ = 0;
 
   uint32_t now_1us = tcnt2_us_();
 
-  if (PIND & _BV(PWM_IN_PORTD))
+  uint8_t is_high = !(PIND & _BV(PWM_IN_PORTD)); // input is inverted
+
+  if (is_high == prev_)
+  {
+    return; // false trigger
+  }
+  prev_ = is_high;
+
+  if (is_high)
   {
     if (rise_)
     {
