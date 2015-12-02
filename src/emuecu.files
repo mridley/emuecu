@@ -1,9 +1,13 @@
 config.h
 ecu.c
+injection.c
+injection.h
 inputs.c
 inputs.h
+Makefile
+rpm.c
+rpm.h
 timers.c
 timers.h
 uart.c
 uart.h
-Makefile

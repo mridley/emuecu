@@ -9,11 +9,13 @@
 #include "uart.h"
 #include "timers.h"
 #include "inputs.h"
+#include "injection.h"
 
 //#define PWM_MIN    800
 #define PWM_MIN    955
 //#define PWM_MAX    2400
 #define PWM_MAX    1740
+#define PWM_LIMIT  2500
 #define RPM_LIMIT  17000
 #define DWELL_TIME_MS 2000
 
@@ -25,6 +27,10 @@
 
 inline uint16_t clamp_pwm(uint16_t v)
 {
+  if (v > 2500)
+  {
+    v = 0;
+  }
   CLAMP(v, PWM_MIN, PWM_MAX);
   return v;
 }
@@ -62,7 +68,6 @@ int main(void)
       {
         ignition_enable();
         pump_enable();
-        set_injection_us(INJ_TIME_US);
         printf("engine start\n");
       }
     }
@@ -73,7 +78,6 @@ int main(void)
         printf("overrev - forced engine stop\n");
         ignition_disable();
         pump_disable();
-        set_injection_us(0);
         engine_stop_ms = ticks_ms();
       }
       if (!curr_rpm)
@@ -81,7 +85,6 @@ int main(void)
         printf("engine has stopped\n");
         ignition_disable();
         pump_disable();
-        set_injection_us(0);
       }
     }
 
@@ -89,16 +92,22 @@ int main(void)
     uint16_t pwm_out = clamp_pwm(pwm_in);
     set_pwm(0, pwm_out);
 
+    const float t_scale = 1.0 / (float)(PWM_MAX - PWM_MIN);
+    float throttle = (float)(pwm_out - PWM_MIN) * t_scale;
+
+    update_inj_row(throttle);
+
     uint16_t ms = ticks_ms();
-    uint32_t us = ticks_us();
+    //uint32_t us = ticks_us();
 
     if ((ms - loop_ms) >= 1000)
     {
       loop_ms += 1000;
-      start_adc();
-      int16_t a = analogue(0);
+      //start_adc();
+      //int16_t a = analogue(0);
 
-      printf("pwm_in=%u pwm_out=%u us=%lu rpm=%u a0=%d\n", pwm_in, pwm_out, us, rpm(), a);
+      //printf("pwm_in=%u pwm_out=%u us=%lu a0=%d\n", pwm_in, pwm_out, us, a);
+      printf("throttle=%d rpm=%u ticks=%u \n",  (int)(100*throttle), rpm(), inj_ticks_(rpm()));
     }
     //sleep(1000);
     //_delay_ms(1000);

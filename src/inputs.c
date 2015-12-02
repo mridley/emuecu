@@ -7,6 +7,7 @@
 
 #include "inputs.h"
 #include "timers.h"
+#include "rpm.h"
 
 // pwm
 volatile uint32_t pwm_ticks_us_ = 0;
@@ -25,7 +26,7 @@ volatile uint32_t ticks_per_rev_us_ = 0;
 volatile uint32_t crank_ticks_us_ = 0;
 volatile uint8_t  rpm_uptodate_ = 0;
 int16_t           current_rpm_ = 0;
-const uint32_t    CRANK_TIMEOUT_USECS = 100000UL;
+
 const uint32_t    PWM_TIMEOUT_USECS = 100000UL;
 
 // Ignition passthrough
@@ -58,7 +59,8 @@ uint16_t rpm()
     }
     if (tpr > 0)
     {
-      current_rpm_ = (uint16_t)(60/(1e-6*tpr));
+      //current_rpm_ = (uint16_t)(60/(1e-6*tpr));
+      current_rpm_ = rpm_from_us(tpr);
     }
   }
   if (current_rpm_)
@@ -111,14 +113,14 @@ ISR(INT0_vect)
   prev_ = is_high;
   if (!is_high)
   {
-    if (ignition_enabled_)
-    {
-      PORTD &= ~_BV(IGN_OUT_PORTD); // follow low
-      do_injection(); // turns on injector, set up interrupt to turn it off
-    }
     if (fall_)
     {
        ticks_per_rev_us_ = (now_us - crank_ticks_us_);
+    }
+    if (ignition_enabled_)
+    {
+      PORTD &= ~_BV(IGN_OUT_PORTD); // follow low
+      do_injection(ticks_per_rev_us_); // turns on injector, set up interrupt to turn it off
     }
     fall_ = 1;
     crank_ticks_us_ = now_us;

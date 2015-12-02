@@ -16,6 +16,11 @@ int uart_putchar(char c, FILE *stream) {
   return 0;
 }
 
+int uart_getchar(FILE *stream) {
+    loop_until_bit_is_set(UCSR0A, RXC0); /* Wait until data exists. */
+    return UDR0;
+}
+
 
 void uart0_init(void) {
   unsigned char baudrateDiv;
@@ -26,9 +31,9 @@ void uart0_init(void) {
   UBRR0L = baudrateDiv;
 	
   UCSR0B = (1 << RXEN0) | (1 << TXEN0);
-  UCSR0C = (1 << USBS0) | (3 << UCSZ00);
+  UCSR0C = (1 << USBS0) | (3 << UCSZ00); // 8 data bits, 1 stop bits, no parity
  
-  fdevopen(uart_putchar, NULL);
+  fdevopen(uart_putchar, uart_getchar);
   //printf("\n\nuart0_init();\n");
 }
 

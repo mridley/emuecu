@@ -6,13 +6,14 @@
 
 #include "timers.h"
 #include "inputs.h"
+#include "injection.h"
+#include "rpm.h"
 
 volatile uint32_t timer_1_ovf_ = 0;
 volatile uint32_t timer_2_500us_ = 0;
 volatile uint32_t timer_2_ovf_ = 0;
 
 uint16_t pwm_[2] = {1500, 1500};
-uint8_t inj_ticks_ = 0;
 uint8_t pump_enabled_ = 0;
 
 void set_pwm(uint8_t c, uint16_t v)
@@ -48,17 +49,14 @@ ISR(TIMER0_OVF_vect)  // timer0 overflow interrupt
   // nothing
 }
 
-void set_injection_us(uint16_t dur)
+void do_injection(uint32_t ticks_per_rev_us)
 {
-  inj_ticks_ = (uint8_t)(dur >> 4);
-}
-
-void do_injection()
-{
-  if (inj_ticks_)
+  uint16_t rpm = rpm_from_us(ticks_per_rev_us);
+  if (rpm)
   {
     PORTD |= _BV(PD6); // Injector on
-    OCR0A = TCNT0 + inj_ticks_; // set delay
+    uint8_t ticks = inj_ticks_(rpm);
+    OCR0A = TCNT0 + ticks; // set delay
     // enable the OC interrupt
     TIMSK0 |= _BV(OCIE0A);
     TIFR0 |= _BV(OCF0A); // clear interrupt flag

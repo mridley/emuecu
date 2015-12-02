@@ -1,7 +1,9 @@
 PRG            = ecu
-OBJ            = ecu.o uart.o timers.o inputs.o
+OBJ            = ecu.o uart.o timers.o rpm.o injection.o inputs.o
+HDR            = config.h uart.h timers.h rpm.h injection.h inputs.h
 MCU_TARGET     = atmega328p
 OPTIMIZE       = -O2
+
 #AVRDUDE_PORT   = /dev/serial/by-id/usb-FTDI_FT232R_USB_UART_A602QP81-if00-port0
 AVRDUDE_PORT   = /dev/serial/by-id/usb-FTDI_FT232R_USB_UART_A602K6GX-if00-port0
 #AVRDUDE_PORT   = /dev/serial/by-id/usb-1a86_USB2.0-Serial-if00-port0
@@ -22,6 +24,10 @@ override LDFLAGS       = -Wl,-Map,$(PRG).map
 
 OBJCOPY        = avr-objcopy
 OBJDUMP        = avr-objdump
+
+# rule that makes all .c depend all .h
+%.o: %.c $(HDR)
+	$(CC) -c $(CFLAGS) -o $@ $< $(LIBS)
 
 all: $(PRG).elf lst text eeprom
 
@@ -75,25 +81,6 @@ esrec: $(PRG)_eeprom.srec
 %_eeprom.bin: %.elf
 	$(OBJCOPY) -j .eeprom --change-section-lma .eeprom=0 -O binary $< $@
 
-# Every thing below here is used by avr-libc's build system and can be ignored
-# by the casual user.
-
-FIG2DEV                 = fig2dev
 EXTRA_CLEAN_FILES       = *.hex *.bin *.srec
-
-dox: eps png pdf
-
-eps: $(PRG).eps
-png: $(PRG).png
-pdf: $(PRG).pdf
-
-%.eps: %.fig
-	$(FIG2DEV) -L eps $< $@
-
-%.pdf: %.fig
-	$(FIG2DEV) -L pdf $< $@
-
-%.png: %.fig
-	$(FIG2DEV) -L png $< $@
 
 
