@@ -12,9 +12,9 @@
 #include "injection.h"
 
 //#define PWM_MIN    800
-#define PWM_MIN    955
+#define PWM_MIN    1170
 //#define PWM_MAX    2400
-#define PWM_MAX    1740
+#define PWM_MAX    2040
 #define PWM_LIMIT  2500
 #define RPM_LIMIT  17000
 #define DWELL_TIME_MS 2000
@@ -107,7 +107,7 @@ int main(void)
       //int16_t a = analogue(0);
 
       //printf("pwm_in=%u pwm_out=%u us=%lu a0=%d\n", pwm_in, pwm_out, us, a);
-      printf("throttle=%d rpm=%u ticks=%u \n",  (int)(100*throttle), rpm(), inj_ticks_(rpm()));
+      printf("pwm=%d throttle=%d rpm=%u ticks=%u \n", pwm_in, (int)(100*throttle), rpm(), inj_ticks_(rpm()));
     }
     //sleep(1000);
     //_delay_ms(1000);

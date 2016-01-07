@@ -1,4 +1,4 @@
-Cmp-Mod V01 Created by CvPcb (2013-jul-07)-stable date = Sat 21 Nov 2015 20:33:05 AEDT
+Cmp-Mod V01 Created by CvPcb (2013-jul-07)-stable date = Wed 06 Jan 2016 22:36:38 AEDT
 
 BeginCmp
 TimeStamp = /5630A14C;
@@ -40,13 +40,6 @@ TimeStamp = /563422B8;
 Reference = C6;
 ValeurCmp = 0.1uF;
 IdModule  = C2;
-EndCmp
-
-BeginCmp
-TimeStamp = /56341FEE;
-Reference = C7;
-ValeurCmp = 4.7uF;
-IdModule  = C1V5;
 EndCmp
 
 BeginCmp
@@ -197,13 +190,6 @@ IdModule  = C2V8;
 EndCmp
 
 BeginCmp
-TimeStamp = /562C41FA;
-Reference = L3;
-ValeurCmp = 47uH;
-IdModule  = C2V8;
-EndCmp
-
-BeginCmp
 TimeStamp = /55D0955B;
 Reference = P1;
 ValeurCmp = INJECTOR;
@@ -253,10 +239,10 @@ IdModule  = SIL-3;
 EndCmp
 
 BeginCmp
-TimeStamp = /5646B825;
+TimeStamp = /568CE11C;
 Reference = P8;
-ValeurCmp = ENGINE_TEMP;
-IdModule  = SIL-3;
+ValeurCmp = ENG TEMP;
+IdModule  = SIL-2;
 EndCmp
 
 BeginCmp
@@ -274,10 +260,10 @@ IdModule  = SIL-3;
 EndCmp
 
 BeginCmp
-TimeStamp = /5646B832;
+TimeStamp = /568CE1E4;
 Reference = P11;
-ValeurCmp = AIR_TEMP;
-IdModule  = SIL-3;
+ValeurCmp = AIR TEMP;
+IdModule  = SIL-2;
 EndCmp
 
 BeginCmp
@@ -346,7 +332,7 @@ EndCmp
 BeginCmp
 TimeStamp = /563F3A7E;
 Reference = R5;
-ValeurCmp = 470;
+ValeurCmp = 200;
 IdModule  = R4;
 EndCmp
 
@@ -395,7 +381,7 @@ EndCmp
 BeginCmp
 TimeStamp = /563F377B;
 Reference = R12;
-ValeurCmp = 20k;
+ValeurCmp = 100k;
 IdModule  = R4;
 EndCmp
 
@@ -458,7 +444,7 @@ EndCmp
 BeginCmp
 TimeStamp = /564306FC;
 Reference = R21;
-ValeurCmp = 20k;
+ValeurCmp = 100k;
 IdModule  = R4;
 EndCmp
 
@@ -547,6 +533,20 @@ IdModule  = R4;
 EndCmp
 
 BeginCmp
+TimeStamp = /568A306B;
+Reference = R34;
+ValeurCmp = 100;
+IdModule  = R4;
+EndCmp
+
+BeginCmp
+TimeStamp = /568A3312;
+Reference = R35;
+ValeurCmp = 100;
+IdModule  = R4;
+EndCmp
+
+BeginCmp
 TimeStamp = /55D9B7ED;
 Reference = T4;
 ValeurCmp = TVS(1.5KE16CA);
@@ -598,7 +598,7 @@ EndCmp
 BeginCmp
 TimeStamp = /562AEA70;
 Reference = Z2;
-ValeurCmp = IN4732 (4.7V);
+ValeurCmp = IN5919BG (5.6V);
 IdModule  = DO-41;
 EndCmp
 

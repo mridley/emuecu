@@ -1,4 +1,4 @@
-eeschema (2013-jul-07)-stable  >> Creation date: Wed 18 Nov 2015 21:31:03 AEDT
+eeschema (2013-jul-07)-stable  >> Creation date: Thu 07 Jan 2016 00:18:17 AEDT
 #Cmp ( order = Reference )
 | C1         47uF        
 | C2         0.1 uF      
@@ -6,9 +6,8 @@ eeschema (2013-jul-07)-stable  >> Creation date: Wed 18 Nov 2015 21:31:03 AEDT
 | C4         0.1uF       
 | C5         0.1uF       
 | C6         0.1uF       
-| C7         4.7uF       
 | C8         10pF        
-| C9         1pF         
+| C9         10pF        
 | C10        0.1uF       
 | C11        0.1uF       
 | C12        0.1uF       
@@ -26,10 +25,8 @@ eeschema (2013-jul-07)-stable  >> Creation date: Wed 18 Nov 2015 21:31:03 AEDT
 | D10        BAT48       
 | D11        BAT48       
 | D12        BAT48       
-| IC1        6N138       
 | L1         47uH        
 | L2         47uH        
-| L3         47uH        
 | P1         INJECTOR    
 | P2         FAN/PUMP    
 | P3         IGNITION    
@@ -37,10 +34,10 @@ eeschema (2013-jul-07)-stable  >> Creation date: Wed 18 Nov 2015 21:31:03 AEDT
 | P5         THROTTLE    
 | P6         SERVO       
 | P7         HALL        
-| P8         ENGINE_TEMP 
+| P8         ENG TEMP    
 | P9         POWER       
 | P10        PUMP        
-| P11        AIR_TEMP    
+| P11        AIR TEMP    
 | P12        I2C         
 | P13        SERIAL      
 | P14        SPI         
@@ -50,14 +47,14 @@ eeschema (2013-jul-07)-stable  >> Creation date: Wed 18 Nov 2015 21:31:03 AEDT
 | R2         1k          
 | R3         47k         
 | R4         1k          
-| R5         470         
+| R5         200         
 | R6         330         
 | R7         2.2k        
 | R8         180         
 | R9         470         
 | R10        180         
 | R11        470         
-| R12        20k         
+| R12        100k        
 | R13        10k         
 | R14        1k          
 | R15        10k         
@@ -66,7 +63,7 @@ eeschema (2013-jul-07)-stable  >> Creation date: Wed 18 Nov 2015 21:31:03 AEDT
 | R18        10k         
 | R19        1k          
 | R20        240         
-| R21        20k         
+| R21        100k        
 | R22        10k         
 | R23        1k          
 | R24        220         
@@ -78,13 +75,17 @@ eeschema (2013-jul-07)-stable  >> Creation date: Wed 18 Nov 2015 21:31:03 AEDT
 | R30        1k          
 | R31        180         
 | R32        180         
+| R33        10k         
+| R34        100         
+| R35        100         
 | T4         TVS(1.5KE16CA)
 | U1         ARDUINO_NANO
 | U2         74AHC1G14   
 | U3         74AHC1G14   
 | U4         7805        
+| U5         6N138       
 | Z1         1N5365B     
-| Z2         IN4732 (4.7V)
+| Z2         IN5919BG (5.6V)
 | Z3         1N4733      
 | Z4         1N4733      
 | Z5         1N4733      
@@ -95,8 +96,8 @@ eeschema (2013-jul-07)-stable  >> Creation date: Wed 18 Nov 2015 21:31:03 AEDT
 #End Cmp
 
 #Cmp ( order = Value )
-| 1pF          C9        
 | 10pF         C8        
+| 10pF         C9        
 | 0.1uF        C3        
 | 0.1uF        C4        
 | 0.1uF        C5        
@@ -105,7 +106,6 @@ eeschema (2013-jul-07)-stable  >> Creation date: Wed 18 Nov 2015 21:31:03 AEDT
 | 0.1uF        C11       
 | 0.1uF        C12       
 | 0.1uF        C13       
-| 4.7uF        C7        
 | 4.7uF        C14       
 | 47uF         C1        
 | 0.1 uF       C2        
@@ -121,36 +121,36 @@ eeschema (2013-jul-07)-stable  >> Creation date: Wed 18 Nov 2015 21:31:03 AEDT
 | BAT48        D11       
 | BAT48        D12       
 | 1N4002       D2        
-| 6N138        IC1       
 | 47uH         L1        
 | 47uH         L2        
-| 47uH         L3        
 | INJECTOR     P1        
 | FAN/PUMP     P2        
+| ENG TEMP     P8        
 | POWER        P9        
+| AIR TEMP     P11       
 | IGNITION     P3        
 | LOAD         P4        
 | THROTTLE     P5        
 | SERVO        P6        
 | HALL         P7        
-| ENGINE_TEMP  P8        
 | PUMP         P10       
-| AIR_TEMP     P11       
 | SERIAL       P13       
 | I2C          P12       
 | SPI          P14       
 | IRL540N      Q1        
 | IRL540N      Q2        
+| 100          R34       
+| 100          R35       
 | 180          R8        
 | 180          R10       
 | 180          R25       
 | 180          R28       
 | 180          R31       
 | 180          R32       
+| 200          R5        
 | 220          R24       
 | 240          R20       
 | 330          R6        
-| 470          R5        
 | 470          R9        
 | 470          R11       
 | 470          R26       
@@ -169,17 +169,19 @@ eeschema (2013-jul-07)-stable  >> Creation date: Wed 18 Nov 2015 21:31:03 AEDT
 | 10k          R18       
 | 10k          R22       
 | 10k          R29       
-| 20k          R12       
-| 20k          R21       
+| 10k          R33       
 | 47k          R1        
 | 47k          R3        
+| 100k         R12       
+| 100k         R21       
 | TVS(1.5KE16CA) T4        
 | 7805         U4        
 | ARDUINO_NANO U1        
+| 6N138        U5        
 | 74AHC1G14    U2        
 | 74AHC1G14    U3        
 | 1N5365B      Z1        
-| IN4732 (4.7V) Z2        
+| IN5919BG (5.6V) Z2        
 | 1N4733       Z3        
 | 1N4733       Z4        
 | 1N4733       Z5        
