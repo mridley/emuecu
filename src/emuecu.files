@@ -1,5 +1,9 @@
+bme280.c
+bme280_defs.h
+bme280.h
 config.h
 ecu.c
+i2cmaster.h
 injection.c
 injection.h
 inputs.c
@@ -9,5 +13,6 @@ rpm.c
 rpm.h
 timers.c
 timers.h
+twimaster.c
 uart.c
 uart.h

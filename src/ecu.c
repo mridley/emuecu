@@ -10,16 +10,7 @@
 #include "timers.h"
 #include "inputs.h"
 #include "injection.h"
-
-//#define PWM_MIN    800
-#define PWM_MIN    1170
-//#define PWM_MAX    2400
-#define PWM_MAX    2040
-#define PWM_LIMIT  2500
-#define RPM_LIMIT  17000
-#define DWELL_TIME_MS 2000
-
-#define INJ_TIME_US 2500
+#include "bme280.h"
 
 
 #define CLAMP(v, min, max)\
@@ -47,6 +38,18 @@ int main(void)
   printf("EMU ECU\n");
  
   sei(); // Enable Global Interrupt
+
+  printf("bme id (0x%02x)\n", bme_probe());
+  printf("bme cd (0x%02x)\n", bme_read_calib_data());
+  //printf("T[%u,%d,%d]\n", cd.dig_T1, cd.dig_T2, cd.dig_T3);
+  //printf("P[%u,%d,%d,%d,%d,%d,%d,%d,%d]\n", cd.dig_P1, cd.dig_P2, cd.dig_P3, cd.dig_P4, cd.dig_P5, cd.dig_P6, cd.dig_P7, cd.dig_P8, cd.dig_P9 );
+  //printf("H[%u,%d,%u,%d,%d,%d]\n", cd.dig_H1, cd.dig_H2, cd.dig_H3, cd.dig_H4, cd.dig_H5, cd.dig_H6 );
+  printf("bme start (0x%02x)\n", bme_start_conversion());
+  sleep(10);
+  printf("bme read (0x%02x)\n", bme_read_data());
+  //printf("p=%lu, t=%lu, h=%u\n", ud.pressure, ud.temperature, ud.humidity);
+  bme_comp_data();
+  printf("p=%lu, t=%ld, h=%u\n", pth_data.pressure, pth_data.temperature, pth_data.humidity);
 
   uint16_t engine_stop_ms = ticks_ms();
 
@@ -103,11 +106,18 @@ int main(void)
     if ((ms - loop_ms) >= 1000)
     {
       loop_ms += 1000;
-      //start_adc();
-      //int16_t a = analogue(0);
-
+      start_adc();
+      int16_t a = analogue(0);
+      int16_t b = analogue(1);
+      if (0 == bme_read_data()) {
+        bme_comp_data();
+      }
       //printf("pwm_in=%u pwm_out=%u us=%lu a0=%d\n", pwm_in, pwm_out, us, a);
-      printf("pwm=%d throttle=%d rpm=%u ticks=%u \n", pwm_in, (int)(100*throttle), rpm(), inj_ticks_(rpm()));
+      printf("pwm=%d throttle=%d rpm=%u ticks=%u a0=%d a1=%d p=%lu, t=%ld, h=%u\n", pwm_in, (int)(100*throttle), rpm(), inj_ticks_(rpm()),
+             a, b,
+             pth_data.pressure, pth_data.temperature, pth_data.humidity);
+      // start next conversion
+      bme_start_conversion();
     }
     //sleep(1000);
     //_delay_ms(1000);

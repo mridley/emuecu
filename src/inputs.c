@@ -8,6 +8,7 @@
 #include "inputs.h"
 #include "timers.h"
 #include "rpm.h"
+#include "i2cmaster.h"
 
 // pwm
 volatile uint32_t pwm_ticks_us_ = 0;
@@ -16,8 +17,8 @@ volatile uint16_t pwm_filtered_val_ = 0;
 volatile uint16_t pwm_period_ = 0;
 volatile uint8_t  pwm_change_ = 0;
 
-// we only use 1 channel
-const uint8_t     adc_num_chan_ = 1;
+// we only use 2 channels
+const uint8_t     adc_num_chan_ = 2;
 volatile uint8_t  adc_complete_ = 0;
 volatile uint16_t adc[8];
 
@@ -34,6 +35,9 @@ uint8_t           ignition_enabled_ = 0;
 #define           IGN_OUT_PORTD PD4
 #define           IGN_IN_PORTD  PD2
 #define           PWM_IN_PORTD  PD3
+
+#define SCL_PORTC PC5
+#define SDA_PORTC PC4
 
 // ----- CRANK -----
 
@@ -248,9 +252,9 @@ ISR(ADC_vect)
   adc[ch] = ADCL; // read low byte first
   adc[ch] |= ((int16_t)ADCH << 8);
 
-  if (ch < adc_num_chan_ - 1)
+  if (ch < (adc_num_chan_ - 1))
   {
-    ADMUX = ADMUX++;
+    ADMUX = ADMUX + 1;
     ADCSRA |= _BV(ADSC); // start next conversion
   }
   else
@@ -264,7 +268,7 @@ void setup_adc()
 {
   // set PC5 as input, for ADC5
   DDRC = 0x00;  // set all to input
-  DIDR0 = 0x3f; // disable all digital inputs
+  DIDR0 = 0x03; // disable digital inputs for A0, A1
 
   // select AVcc Refrence
   ADMUX |= _BV(REFS0);
@@ -298,9 +302,15 @@ int16_t analogue(uint8_t ch)
   return v;
 }
 
+
+
 void setup_inputs()
 {
   setup_int0();
   setup_int1();
   setup_adc();
+  // enable pullups for extra oomf
+  PORTC |= (_BV(SCL_PORTC) | _BV(SDA_PORTC));
+  i2c_init();
+
 }
