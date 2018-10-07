@@ -1,6 +1,6 @@
 PRG            = ecu
-OBJ            = ecu.o uart.o timers.o rpm.o injection.o inputs.o twimaster.c bme280.c
-HDR            = config.h uart.h timers.h rpm.h injection.h inputs.h i2cmaster.h bme280.h bme280_defs.h
+OBJ            = ecu.o uart.o timers.o rpm.o injection.o inputs.o twimaster.c bme280.c max6675.c
+HDR            = config.h uart.h timers.h rpm.h injection.h inputs.h i2cmaster.h bme280.h bme280_defs.h max6675.h
 MCU_TARGET     = atmega328p
 OPTIMIZE       = -O2
 

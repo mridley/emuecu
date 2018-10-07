@@ -1,6 +1,6 @@
 bme280.c
-bme280_defs.h
 bme280.h
+bme280_defs.h
 config.h
 ecu.c
 i2cmaster.h
@@ -9,6 +9,8 @@ injection.h
 inputs.c
 inputs.h
 Makefile
+max6675.c
+max6675.h
 rpm.c
 rpm.h
 timers.c

@@ -9,6 +9,7 @@
 #include "timers.h"
 #include "rpm.h"
 #include "i2cmaster.h"
+#include "max6675.h"
 
 // pwm
 volatile uint32_t pwm_ticks_us_ = 0;
@@ -312,5 +313,20 @@ void setup_inputs()
   // enable pullups for extra oomf
   PORTC |= (_BV(SCL_PORTC) | _BV(SDA_PORTC));
   i2c_init();
-
+  max6675_init();
 }
+
+// calibration data
+/*
+
+
+a0=48 a1=223 egt=0
+a0=94 a1=366 egt=850
+a0=102 a1=396 egt=1200
+a0=171 a1=545 egt=2275
+a0=257 a1=689 egt=3450
+a0=311 a1=757 egt=4175
+
+
+
+ */

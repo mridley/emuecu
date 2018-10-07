@@ -11,6 +11,7 @@
 #include "inputs.h"
 #include "injection.h"
 #include "bme280.h"
+#include "max6675.h"
 
 
 #define CLAMP(v, min, max)\
@@ -112,10 +113,12 @@ int main(void)
       if (0 == bme_read_data()) {
         bme_comp_data();
       }
+      uint16_t egt = max6675_read();
       //printf("pwm_in=%u pwm_out=%u us=%lu a0=%d\n", pwm_in, pwm_out, us, a);
-      printf("pwm=%d throttle=%d rpm=%u ticks=%u a0=%d a1=%d p=%lu, t=%ld, h=%u\n", pwm_in, (int)(100*throttle), rpm(), inj_ticks_(rpm()),
+      printf("pwm=%d throttle=%d rpm=%u ticks=%u a0=%d a1=%d p=%lu, t=%ld, h=%u egt=%d\n", pwm_in, (int)(100*throttle), rpm(), inj_ticks_(rpm()),
              a, b,
-             pth_data.pressure, pth_data.temperature, pth_data.humidity);
+             pth_data.pressure, pth_data.temperature, pth_data.humidity,
+             egt);
       // start next conversion
       bme_start_conversion();
     }

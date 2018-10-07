@@ -190,3 +190,12 @@ void sleep(int ms)
   }
 }
 
+void microsleep(int us)
+{
+  uint16_t t0 = ticks_us();
+  while((ticks_us() - t0) < us)
+  {
+    sleep_cpu();
+  }
+}
+

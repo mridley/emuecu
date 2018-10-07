@@ -33,5 +33,6 @@ uint32_t ticks_us();
 uint16_t ticks_ms();
 
 void sleep(int ms);
+void microsleep(int us);
 
 #endif
