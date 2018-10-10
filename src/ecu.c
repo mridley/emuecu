@@ -23,7 +23,7 @@ inline uint16_t clamp_pwm(uint16_t v)
   {
     v = 0;
   }
-  CLAMP(v, PWM_MIN, PWM_MAX);
+  CLAMP(v, config.pwm_min, config.pwm_max);
   return v;
 }
 
@@ -31,6 +31,10 @@ inline uint16_t clamp_pwm(uint16_t v)
 int main(void)
 {
   uart0_init();
+
+  config_load();
+  config_dump();
+  //config_save();
 
   setup_timers();
 
@@ -61,14 +65,14 @@ int main(void)
     if (!curr_rpm)
     {
       // keep the stop time sliding for when we attempt to start again
-      if ((ticks_ms() - engine_stop_ms) > DWELL_TIME_MS)
+      if ((ticks_ms() - engine_stop_ms) > config.dwell_time_ms)
       {
-        engine_stop_ms = ticks_ms() - DWELL_TIME_MS;
+        engine_stop_ms = ticks_ms() - config.dwell_time_ms;
       }
     }
     if (!ignition_enabled())
     {
-      if (curr_rpm > 0 && (ticks_ms() - engine_stop_ms) > DWELL_TIME_MS)
+      if (curr_rpm > 0 && (ticks_ms() - engine_stop_ms) > config.dwell_time_ms)
       {
         ignition_enable();
         pump_enable();
@@ -77,7 +81,7 @@ int main(void)
     }
     else
     {
-      if (curr_rpm > RPM_LIMIT)
+      if (curr_rpm > config.rpm_limit)
       {
         printf("overrev - forced engine stop\n");
         ignition_disable();
@@ -96,8 +100,8 @@ int main(void)
     uint16_t pwm_out = clamp_pwm(pwm_in);
     set_pwm(0, pwm_out);
 
-    const float t_scale = 1.0 / (float)(PWM_MAX - PWM_MIN);
-    float throttle = (float)(pwm_out - PWM_MIN) * t_scale;
+    const float t_scale = 1.0 / (float)(config.pwm_max - config.pwm_min);
+    float throttle = (float)(pwm_out - config.pwm_min) * t_scale;
 
     update_inj_row(throttle);
 

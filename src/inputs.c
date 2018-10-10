@@ -316,17 +316,25 @@ void setup_inputs()
   max6675_init();
 }
 
-// calibration data
+// thermistor calibration data
 /*
 
-
-a0=48 a1=223 egt=0
-a0=94 a1=366 egt=850
+a0=48  a1=223 egt=0
+a0=94  a1=366 egt=850
 a0=102 a1=396 egt=1200
+a0=175 a1=551 egt=2225
 a0=171 a1=545 egt=2275
 a0=257 a1=689 egt=3450
 a0=311 a1=757 egt=4175
-
-
+a0=414 a1=859 egt=5000
+a0=472 a1=899 egt=5500
+a0=503 a1=930 egt=6000
+a0=522 a1=932 egt=6000
+a0=601 a1=978 egt=6750
+a0=573 a1=978 egt=7000
+a0=623 a1=989 egt=7000
+a0=694 a1=1022 egt=7675
+a0=718 a1=1023 egt=8000
+a0=805 a1=1023 egt=9000
 
  */
