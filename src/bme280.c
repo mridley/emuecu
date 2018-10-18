@@ -27,7 +27,6 @@ uint8_t bme_probe()
    return 0;
 }
 
-
 uint8_t bme_read_calib_data()
 {
   uint8_t rc = i2c_start((BME280_I2C_ADDR_PRIM << 1) + I2C_WRITE);
@@ -55,21 +54,21 @@ uint8_t bme_read_calib_data()
         if (0 == rc) {
           cd.dig_P1 = (uint16_t)i2c_readAck();
           cd.dig_P1 |= (uint16_t)i2c_readAck() << 8;
-          cd.dig_P2 = (uint16_t)i2c_readAck();
+          cd.dig_P2 = (int16_t)i2c_readAck();
           cd.dig_P2 |= (int16_t)i2c_readAck() << 8;
-          cd.dig_P3 = (uint16_t)i2c_readAck();
+          cd.dig_P3 = (int16_t)i2c_readAck();
           cd.dig_P3 |= (int16_t)i2c_readAck() << 8;
-          cd.dig_P4 = (uint16_t)i2c_readAck();
+          cd.dig_P4 = (int16_t)i2c_readAck();
           cd.dig_P4 |= (int16_t)i2c_readAck() << 8;
-          cd.dig_P5 = (uint16_t)i2c_readAck();
+          cd.dig_P5 = (int16_t)i2c_readAck();
           cd.dig_P5 |= (int16_t)i2c_readAck() << 8;
-          cd.dig_P6 = (uint16_t)i2c_readAck();
+          cd.dig_P6 = (int16_t)i2c_readAck();
           cd.dig_P6 |= (int16_t)i2c_readAck() << 8;
-          cd.dig_P7 = (uint16_t)i2c_readAck();
+          cd.dig_P7 = (int16_t)i2c_readAck();
           cd.dig_P7 |= (int16_t)i2c_readAck() << 8;
-          cd.dig_P8 = (uint16_t)i2c_readAck();
+          cd.dig_P8 = (int16_t)i2c_readAck();
           cd.dig_P8 |= (int16_t)i2c_readAck() << 8;
-          cd.dig_P9 = (uint16_t)i2c_readAck();
+          cd.dig_P9 = (int16_t)i2c_readAck();
           cd.dig_P9 |= (int16_t)i2c_readAck() << 8;
           cd.dig_H1 = (uint8_t)i2c_readNak();
           i2c_stop();
@@ -84,14 +83,15 @@ uint8_t bme_read_calib_data()
       if (0 == rc) {
         rc = i2c_start((BME280_I2C_ADDR_PRIM << 1) + I2C_READ);
         if (0 == rc) {
-          cd.dig_H2 = (uint16_t)i2c_readAck();
-          cd.dig_H2 |= (int16_t)i2c_readAck() << 8;
-          cd.dig_H3 = (uint8_t)i2c_readAck();
-          cd.dig_H4 = (uint16_t)i2c_readAck();
-          cd.dig_H4 |= (int16_t)i2c_readAck() << 8;
-          cd.dig_H5 = (uint16_t)i2c_readAck();
-          cd.dig_H5 |= (int16_t)i2c_readAck() << 8;
-          cd.dig_H6 = (int8_t)i2c_readNak() << 8;
+          cd.dig_H2 = (int16_t)i2c_readAck();       // E1
+          cd.dig_H2 |= (int16_t)i2c_readAck() << 8; // E2
+          cd.dig_H3 = (uint8_t)i2c_readAck();       // E3
+          uint8_t E4 = i2c_readAck();
+          uint8_t E5 = i2c_readAck();
+          uint8_t E6 = i2c_readAck();
+          cd.dig_H4 = (int16_t)(int8_t)E4 << 4 | ((int16_t)E5 & 0x0f);
+          cd.dig_H5 = (int16_t)(int8_t)E6 << 4 | ((int16_t)E5 >> 4);
+          cd.dig_H6 = (int8_t)i2c_readNak();        // E7
           i2c_stop();
         }
       }
@@ -161,7 +161,6 @@ void bme_comp_data()
 
 // Returns temperature in DegC, resolution is 0.01 DegC. Output value of '5123' equals 51.23 DegC.
 // t_fine carries fine temperature as global value
-
 int32_t BME280_compensate_T_int32(int32_t adc_T)
 {
   int32_t var1, var2, T;

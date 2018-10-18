@@ -7,22 +7,34 @@
 
 #include <stdint.h>
 
-#define PWM_LIMIT     (2500)
+#define PWM_LIMIT      (2500)
+#define RPM_LIMIT      (15000)
 #define CONFIG_VERSION (1)
+
+#define MAP_ROWS       (10)
+#define MAP_COLS       (10)
 
 typedef struct _config
 {
-  uint8_t  version;
-  uint16_t pwm_min;
-  uint16_t pwm_max;
-  uint16_t rpm_limit;
+  uint8_t  version;   // int
+  uint16_t pwm_min;   // us
+  uint16_t pwm_max;   // us
+  uint16_t rpm_limit; // rpm
 
-  uint16_t idle_rpm;
-  uint16_t dwell_time_ms;
+  uint8_t  capacity;   // cc
+  uint16_t  inj_open;  // us
+  uint16_t  inj_close; // us
+  uint16_t  inj_flow;  // g/min
 
-  uint16_t a0cal[16];
-  uint16_t a1cal[16];
-  uint8_t  map[16][16];
+  uint16_t idle_rpm;      // rpm
+  uint16_t dwell_time_ms; // ms
+
+  // tables and calibration
+  uint16_t a0cal[16];     // 100*degrees
+  uint16_t a1cal[16];     // 100*degrees
+  uint8_t  inj_map[MAP_ROWS][MAP_COLS];   // [throttle  ][rpm] ticks (16us)
+  int8_t   ign_adv[MAP_COLS];
+
   uint16_t checksum;
 } emuconfig_t;
 

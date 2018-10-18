@@ -2,13 +2,12 @@
 #include <stdio.h>
 #include <string.h>
 #include "config.h"
-
+#include "injection.h"
 
 // defaults
 #define PWM_MIN       (800)
 #define PWM_MAX       (2400)
 
-#define RPM_LIMIT     (17000)
 #define DWELL_TIME_MS (2000)
 #define IDLE_RPM      (1200)
 
@@ -18,15 +17,21 @@ emuconfig_t config;
 
 void config_defaults()
 {
+  config.version = CONFIG_VERSION;
   config.dwell_time_ms = DWELL_TIME_MS;
   config.idle_rpm = IDLE_RPM;
   config.pwm_max = PWM_MAX;
   config.pwm_min = PWM_MIN;
-  config.rpm_limit = RPM_LIMIT;
-  config.version = CONFIG_VERSION;
+  config.rpm_limit = RPM_LIMIT; // set to table boundary
+  config.capacity = 35;
+  config.inj_open = 900;
+  config.inj_close = 650;
+  config.inj_flow = 38;
+
   memset(config.a0cal, 0, sizeof(config.a0cal));
-  memset(config.a1cal, 0, sizeof(config.a0cal));
-  memset(config.map, 128, sizeof(config.a0cal));
+  memset(config.a1cal, 0, sizeof(config.a1cal));
+  inj_map_default();
+  memset(config.ign_adv, 0, sizeof(config.ign_adv));
   config.checksum = 0;
 }
 
@@ -66,4 +71,5 @@ void config_dump()
   printf("rpm_limit : %u\n", config.rpm_limit);
   printf("version : %u\n", config.version);
   printf("checksum : 0x%04x\n", config.checksum);
+  inj_map_dump();
 }

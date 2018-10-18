@@ -103,7 +103,7 @@ int main(void)
     const float t_scale = 1.0 / (float)(config.pwm_max - config.pwm_min);
     float throttle = (float)(pwm_out - config.pwm_min) * t_scale;
 
-    update_inj_row(throttle);
+    inj_map_update_row(throttle);
 
     uint16_t ms = ticks_ms();
     //uint32_t us = ticks_us();
