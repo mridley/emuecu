@@ -39,7 +39,13 @@ void inj_map_default(void)
     {
       // guess volumetric efficiency at low rpm, ve nom at mid rpm
       float ve = VE_NOM + (VE_MAX - VE_NOM)*(float)((int8_t)(MAP_COLS - 1)/2 - i)/(float)((MAP_COLS - 1)/2U);
-      int16_t inj_time_us = config.inj_open + (int16_t)(full_inj_time_us * throttle * ve) + config.inj_close;
+      // assume 50% delivery during closing time
+
+      int16_t inj_time_us = config.inj_open;
+      int16_t adj_time_us = (int16_t)(full_inj_time_us * throttle * ve);
+      if (adj_time_us > (config.inj_close/2)) {
+        inj_time_us += (adj_time_us - (config.inj_close/2));
+      }
       if (inj_time_us < 0) {
         inj_time_us = 0;
       } else if (inj_time_us > INJ_TIME_MAX) {
@@ -80,8 +86,8 @@ void inj_map_update_row(float throttle)
 uint8_t inj_ticks_(uint16_t rpm)
 {
   uint8_t col = (uint8_t)(rpm >> MAP_RPM_BITS_PER_COL);
-  if (col >= MAP_COLS) {
-    col = MAP_COLS - 1;
+  if (col >= (MAP_COLS-1)) {
+    return _inj_row[MAP_COLS-1];
   }
   int16_t dt_s1 = ((int16_t)_inj_row[col+1] - (int16_t)_inj_row[col]) >> 1; // make fit in int8_t
   int16_t dt_s = (dt_s1 * ((rpm & RPM_MASK) >> (MAP_RPM_BITS_PER_COL - 8) )); // int8_t * uint8_t

@@ -152,11 +152,19 @@ uint8_t bme_read_data()
   return rc;
 }
 
-void bme_comp_data()
+uint32_t bme_baro()
 {
-  pth_data.temperature = BME280_compensate_T_int32(ud.temperature);
-  pth_data.pressure = BME280_compensate_P_int32(ud.pressure);
-  pth_data.humidity = bme280_compensate_H_int32(ud.humidity);
+  return BME280_compensate_P_int32(ud.pressure);
+}
+
+uint16_t bme_humidity()
+{
+  return (uint16_t)bme280_compensate_H_int32(ud.humidity);
+}
+
+uint16_t bme_temp()
+{
+  return (uint16_t)BME280_compensate_T_int32(ud.temperature);
 }
 
 // Returns temperature in DegC, resolution is 0.01 DegC. Output value of '5123' equals 51.23 DegC.

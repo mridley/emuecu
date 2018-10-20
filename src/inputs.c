@@ -4,7 +4,6 @@
 #include <stdint.h>
 #include <stdio.h>
 
-
 #include "inputs.h"
 #include "timers.h"
 #include "rpm.h"
@@ -33,13 +32,16 @@ const uint32_t    PWM_TIMEOUT_USECS = 100000UL;
 
 // Ignition passthrough
 uint8_t           ignition_enabled_ = 0;
+
 #define           IGN_OUT_PORTD PD4
 #define           IGN_IN_PORTD  PD2
 #define           PWM_IN_PORTD  PD3
 
-#define SCL_PORTC PC5
-#define SDA_PORTC PC4
+#define           SCL_PORTC     PC5
+#define           SDA_PORTC     PC4
 
+#define           A_BITS        (10)
+#define           A_TAB_STEP_BITS (A_BITS - A_TAB_IDX_BITS)
 // ----- CRANK -----
 
 uint32_t crank_ticks_us()
@@ -314,6 +316,21 @@ void setup_inputs()
   PORTC |= (_BV(SCL_PORTC) | _BV(SDA_PORTC));
   i2c_init();
   max6675_init();
+}
+
+int16_t interp_a_tab(const int16_t tab[A_TAB_SIZE], uint16_t v)
+{
+  if (v <= 0) {
+    return tab[0];
+  }
+  if (v >= (1 << A_BITS)) {
+    return tab[(1 << A_TAB_IDX_BITS)];
+  }
+
+  uint8_t idx0 = (uint8_t)(v >> A_TAB_STEP_BITS);
+  const uint16_t mask = ((1 << A_TAB_STEP_BITS) - 1);
+  int16_t iv = tab[idx0] + (((int32_t)(tab[idx0 + 1] - tab[idx0])*(int32_t)(v & mask))>>A_TAB_STEP_BITS);
+  return iv;
 }
 
 // thermistor calibration data

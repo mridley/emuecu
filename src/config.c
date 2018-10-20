@@ -1,12 +1,13 @@
 #include <avr/eeprom.h>
+#include <avr/pgmspace.h>
 #include <stdio.h>
 #include <string.h>
 #include "config.h"
 #include "injection.h"
 
 // defaults
-#define PWM_MIN       (800)
-#define PWM_MAX       (2400)
+#define PWM_MIN       (910)
+#define PWM_MAX       (2230)
 
 #define DWELL_TIME_MS (2000)
 #define IDLE_RPM      (1200)
@@ -14,6 +15,20 @@
 #define CONFIG_EE_ADDR (0)
 
 emuconfig_t config;
+
+const int16_t atab0[A_TAB_SIZE] PROGMEM = {
+  -1008,   358,  1532,  2541,
+  3411,  4168, 4840, 5452,
+  6031,  6604,  7197,  7837,
+  8550, 9364, 10304, 11397, 12670
+};
+
+const int16_t atab1[A_TAB_SIZE] PROGMEM = {
+  -2775, -1848, -1058,  -385,
+  192,   698,  1154, 1580,
+  1999,  2434,  2905,  3434,
+  4045,  4758,  5595,  6578,  7730
+};
 
 void config_defaults()
 {
@@ -28,8 +43,8 @@ void config_defaults()
   config.inj_close = 650;
   config.inj_flow = 38;
 
-  memset(config.a0cal, 0, sizeof(config.a0cal));
-  memset(config.a1cal, 0, sizeof(config.a1cal));
+  memcpy_P(config.a0cal, atab0, sizeof(config.a0cal));
+  memcpy_P(config.a1cal, atab1, sizeof(config.a1cal));
   inj_map_default();
   memset(config.ign_adv, 0, sizeof(config.ign_adv));
   config.checksum = 0;

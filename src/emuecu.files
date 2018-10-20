@@ -4,12 +4,12 @@ bme280_defs.h
 config.c
 config.h
 ecu.c
+ecu.h
 i2cmaster.h
 injection.c
 injection.h
 inputs.c
 inputs.h
-Makefile
 max6675.c
 max6675.h
 rpm.c

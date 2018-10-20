@@ -14,6 +14,9 @@
 #define MAP_ROWS       (10)
 #define MAP_COLS       (10)
 
+#define A_TAB_IDX_BITS (4)
+#define A_TAB_SIZE     ((1<<A_TAB_IDX_BITS) + 1)
+
 typedef struct _config
 {
   uint8_t  version;   // int
@@ -21,17 +24,17 @@ typedef struct _config
   uint16_t pwm_max;   // us
   uint16_t rpm_limit; // rpm
 
-  uint8_t  capacity;   // cc
-  uint16_t  inj_open;  // us
-  uint16_t  inj_close; // us
-  uint16_t  inj_flow;  // g/min
+  uint8_t  capacity;  // cc
+  uint16_t inj_open;  // us
+  uint16_t inj_close; // us
+  uint16_t inj_flow;  // g/min
 
   uint16_t idle_rpm;      // rpm
   uint16_t dwell_time_ms; // ms
 
   // tables and calibration
-  uint16_t a0cal[16];     // 100*degrees
-  uint16_t a1cal[16];     // 100*degrees
+  int16_t  a0cal[A_TAB_SIZE]; // 100*degrees
+  int16_t  a1cal[A_TAB_SIZE]; // 100*degrees
   uint8_t  inj_map[MAP_ROWS][MAP_COLS];   // [throttle  ][rpm] ticks (16us)
   int8_t   ign_adv[MAP_COLS];
 

@@ -14,19 +14,19 @@ void max6675_init()
 /*
  * @brief returns temperature in hundreths of a degree i.e. 25.43 deg C returns 2543
  */
-int32_t max6675_read()
+uint32_t max6675_read()
 {
   uint16_t data = 0;
   PORTB &= ~_BV(MAX6675_CS); // CS asserted
-  microsleep(100);
+  microsleep(MAX6675_PERIOD_US);
 
   for (uint8_t i =0; i < 16; ++i) {
     PORTB |= _BV(MAX6675_SCK); // SCK high
-    microsleep(100);
+    microsleep(MAX6675_PERIOD_US);
     data <<= 1;
     data |= (uint16_t)((PINB & _BV(MAX6675_SO)) ? 1 : 0);
     PORTB &= ~_BV(MAX6675_SCK); // SCK low
-    microsleep(100);
+    microsleep(MAX6675_PERIOD_US);
   }
 
   PORTB |= _BV(MAX6675_CS); // CS high
