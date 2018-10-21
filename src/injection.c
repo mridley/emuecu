@@ -60,9 +60,16 @@ void inj_map_default(void)
 const uint16_t RPM_MASK = (1 << MAP_RPM_BITS_PER_COL) - 1;
 
 // the current active row (based on throttle position)
-static uint8_t _inj_row[MAP_COLS] = {0, 0, 0, 0};
+static uint8_t _inj_row[MAP_COLS] = {0};
 
-void inj_map_update_row(float throttle)
+float inj_pt_correction(uint32_t baro, int16_t iat)
+{
+  // baro*temp is bigger than INT_MAX cast to uint32_t
+  float pt_c = (float)(baro*(uint32_t)(ZEROC_KELVIN+TEMP_REF_CDEGC)/(float)(BARO_MSLP_PA*(uint32_t)(ZEROC_KELVIN+iat)));
+  return pt_c;
+}
+
+void inj_map_update_row(float throttle, float pt_c)
 {
   uint8_t tmp[MAP_COLS];
   uint8_t row = (uint8_t)(throttle * (MAP_ROWS - 1));
@@ -71,10 +78,10 @@ void inj_map_update_row(float throttle)
     row = MAP_ROWS - 2U;
   }
   float wgt = (MAP_ROWS - 1U) * throttle - row;
-
   for (uint8_t i = 0U; i < MAP_COLS; ++i)
   {
-    tmp[i] = (uint8_t)((float)config.inj_map[row][i] + wgt * (config.inj_map[row + 1][i] - config.inj_map[row][i]));
+    float v_uc = (float)config.inj_map[row][i] + wgt * (config.inj_map[row + 1][i] - config.inj_map[row][i]);
+    tmp[i] = (uint8_t)(v_uc*pt_c);
   }
   ATOMIC_BLOCK(ATOMIC_FORCEON)
   {

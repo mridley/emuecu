@@ -20,8 +20,11 @@
 typedef struct _config
 {
   uint8_t  version;   // int
-  uint16_t pwm_min;   // us
-  uint16_t pwm_max;   // us
+  uint16_t pwm0_min;  // us throttle
+  uint16_t pwm0_max;  // us
+  uint16_t pwm1_min;  // us starter?
+  uint16_t pwm1_max;  // us
+  uint8_t  auto_start; // attempts
   uint16_t rpm_limit; // rpm
 
   uint8_t  capacity;  // cc
@@ -31,6 +34,7 @@ typedef struct _config
 
   uint16_t idle_rpm;      // rpm
   uint16_t dwell_time_ms; // ms
+  uint16_t start_time_ms; // ms
 
   // tables and calibration
   int16_t  a0cal[A_TAB_SIZE]; // 100*degrees

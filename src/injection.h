@@ -4,11 +4,19 @@
 #include <stdint.h>
 #include "config.h"
 
-// Air density at 15 deg C at sea level
-#define AIR_DENSITY_15C_SL (0.001225f)
-
 // Air fuel ratio
 #define AFR (14.7f)
+
+// Air density at 15 deg C at sea level (g/cc)
+#define AIR_DENSITY_15C_SL (0.001225f)
+
+// Mean sea level pressure (Pa)
+#define BARO_MSLP_PA (101325UL)
+
+// Reference temp against which we adjust (centi degrees)
+#define TEMP_REF_CDEGC (1500L)
+
+#define ZEROC_KELVIN (27315UL)
 
 // Volumetric efficiency (nominal)
 #define VE_NOM (0.55f)
@@ -23,7 +31,8 @@
 
 #define MAP_MAX_RPM ((MAP_COLS-1)<<MAP_RPM_BITS_PER_COL)
 
-void inj_map_update_row(float throttle);
+float inj_pt_correction(uint32_t baro, int16_t iat);
+void inj_map_update_row(float throttle, float pt_c);
 void inj_map_default(void);
 void inj_map_dump(void);
 

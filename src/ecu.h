@@ -3,8 +3,18 @@
 
 #include <stdint.h>
 
+typedef enum  {
+  INIT = 0,
+  PRIME,
+  STOPPED,
+  CRANK,
+  START,
+  RUNNING,
+} state_t;
+
 typedef struct _ecu_status
 {
+  state_t  state;
   float throttle;
   uint16_t rpm;
   int16_t cht;   // -? - ~100
@@ -13,10 +23,12 @@ typedef struct _ecu_status
   int16_t ecut;  // -? -
   uint32_t baro; // 0 - ~101300pa
   uint16_t humidity;
+  float pt_c;
+
   uint8_t inj_ticks;
   uint16_t pwm0_in;
   uint16_t pwm0_out;
   uint16_t pwm1_out;
-} ecu_status;
+} emustatus_t;
 
 #endif

@@ -10,6 +10,7 @@
 #define PWM_MAX       (2230)
 
 #define DWELL_TIME_MS (2000)
+#define START_TIME_MS (1000)
 #define IDLE_RPM      (1200)
 
 #define CONFIG_EE_ADDR (0)
@@ -34,9 +35,13 @@ void config_defaults()
 {
   config.version = CONFIG_VERSION;
   config.dwell_time_ms = DWELL_TIME_MS;
+  config.start_time_ms = START_TIME_MS;
+  config.auto_start = 5;
   config.idle_rpm = IDLE_RPM;
-  config.pwm_max = PWM_MAX;
-  config.pwm_min = PWM_MIN;
+  config.pwm0_max = PWM_MAX;
+  config.pwm0_min = PWM_MIN;
+  config.pwm1_max = PWM_MAX;
+  config.pwm1_min = PWM_MIN;
   config.rpm_limit = RPM_LIMIT; // set to table boundary
   config.capacity = 35;
   config.inj_open = 900;
@@ -79,12 +84,20 @@ void config_save()
 
 void config_dump()
 {
-  printf("dwell_time_ms : %u\n",config.dwell_time_ms);
+  printf("dwell_time_ms : %u\n", config.dwell_time_ms);
+  printf("start_time_ms : %u\n", config.start_time_ms);
+  printf("auto_start : %u", (uint16_t)config.auto_start);
   printf("idle_rpm : %u\n", config.idle_rpm);
-  printf("pwm_max : %u\n", config.pwm_max);
-  printf("pwm_min : %u\n", config.pwm_min);
+  printf("pwm0_max : %u\n", config.pwm0_max);
+  printf("pwm0_min : %u\n", config.pwm0_min);
+  printf("pwm1_max : %u\n", config.pwm1_max);
+  printf("pwm1_min : %u\n", config.pwm1_min);
   printf("rpm_limit : %u\n", config.rpm_limit);
-  printf("version : %u\n", config.version);
+  printf("version : %u\n", (uint16_t)config.version);
   printf("checksum : 0x%04x\n", config.checksum);
+  printf("capacity: %u\n", (uint16_t)config.capacity);
+  printf("inj_open : %u\n", config.inj_open);
+  printf("inj_close : %u\n", config.inj_close);
+  printf("inj_flow : %u\n", config.inj_flow);
   inj_map_dump();
 }

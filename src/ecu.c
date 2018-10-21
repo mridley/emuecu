@@ -5,6 +5,7 @@
 #include <avr/sleep.h>
 #include <util/delay.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "config.h"
 #include "ecu.h"
@@ -19,25 +20,31 @@
 #define CLAMP(v, min, max)\
   v = (v > max) ? max : ((v < min) ? min : v );
 
-inline uint16_t clamp_pwm(uint16_t v)
+inline uint16_t clamp_pwm(uint16_t v, uint16_t pwm_min, uint16_t pwm_max)
 {
+  // for no input scenario
   if (v > PWM_LIMIT)
   {
     v = 0U;
   }
-  CLAMP(v, config.pwm_min, config.pwm_max);
+  CLAMP(v, pwm_min, pwm_max);
   return v;
 }
 
 
 int main(void)
 {
+  emustatus_t status = {0};
   uart0_init();
 
   config_load();
   config_dump();
   //config_save();
 
+  status.pwm0_out = config.pwm0_min;
+  set_pwm(0, status.pwm0_out);
+  status.pwm1_out = config.pwm1_min;
+  set_pwm(1, status.pwm1_out);
   setup_timers();
 
   setup_inputs();
@@ -57,57 +64,32 @@ int main(void)
   start_adc();
 
   uint16_t engine_stop_ms = ticks_ms();
-  ecu_status status = {0};
-  uint16_t loop_ms = 0;
+  uint16_t engine_start_ms = ticks_ms();
+  uint16_t engine_prime_ms;
+  uint16_t loop_ms = ticks_ms() - 1000;
   while (1)
   {
+    uint16_t ms = ticks_ms();
     status.rpm = rpm();
-    if (!status.rpm)
-    {
-      // keep the stop time sliding for when we attempt to start again
-      if ((ticks_ms() - engine_stop_ms) > config.dwell_time_ms)
-      {
-        engine_stop_ms = ticks_ms() - config.dwell_time_ms;
-      }
-    }
-    if (!ignition_enabled())
-    {
-      if (status.rpm > 0 && (ticks_ms() - engine_stop_ms) > config.dwell_time_ms)
-      {
-        ignition_enable();
-        pump_enable();
-        printf("engine start\n");
-      }
-    }
-    else
-    {
-      if (status.rpm > config.rpm_limit)
-      {
-        printf("overrev - forced engine stop\n");
-        ignition_disable();
-        pump_disable();
-        engine_stop_ms = ticks_ms();
-      }
-      if (!status.rpm)
-      {
-        printf("engine has stopped\n");
-        ignition_disable();
-        pump_disable();
-      }
-    }
-
     status.pwm0_in = pwm_input();
-    status.pwm0_out = clamp_pwm(status.pwm0_in);
+    status.pwm0_out = clamp_pwm(status.pwm0_in, config.pwm0_min, config.pwm0_max);
     set_pwm(0, status.pwm0_out);
 
-    const float t_scale = 1.0 / (float)(config.pwm_max - config.pwm_min);
-    status.throttle = (float)(status.pwm0_out - config.pwm_min) * t_scale;
+    const float t_scale = 1.0 / (float)(config.pwm0_max - config.pwm0_min);
+    status.throttle = (float)(status.pwm0_out - config.pwm0_min) * t_scale;
 
-    inj_map_update_row(status.throttle);
+    inj_map_update_row(status.throttle, status.pt_c);
 
-    uint16_t ms = ticks_ms();
-    //uint32_t us = ticks_us();
-
+    // keep the start/stop times sliding to prevent wraps
+    if ((ms - engine_stop_ms) > 2*config.dwell_time_ms)
+    {
+      engine_stop_ms = ms - config.dwell_time_ms;
+    }
+    if ((ms - engine_start_ms) > 2*config.dwell_time_ms)
+    {
+      engine_start_ms = ms - config.dwell_time_ms;
+    }
+    // 1 second tasks
     if ((ms - loop_ms) >= 1000)
     {
       loop_ms += 1000;
@@ -119,22 +101,111 @@ int main(void)
         status.baro = bme_baro();
         status.ecut = bme_temp();
         status.humidity = bme_humidity();
+        status.pt_c = inj_pt_correction(status.baro, status.iat);
+      } else {
+        status.pt_c = inj_pt_correction(BARO_MSLP_PA, status.iat);
       }
-      status.egt = max6675_read();
-      //printf("pwm_in=%u pwm_out=%u us=%lu a0=%d\n", pwm_in, pwm_out, us, a);
 
-      printf("pwm=%d throttle=%d rpm=%u ticks=%u cht=%d iat=%d p=%lu, t=%d, h=%u egt=%ld\n",
-             status.pwm0_in, (int)(100*status.throttle), status.rpm, inj_ticks_(rpm()),
+      status.egt = max6675_read();
+
+      printf("pwm0_in=%d throttle=%d rpm=%u cht=%d iat=%d p=%lu, t=%d, h=%u egt=%ld\n",
+             status.pwm0_in, (int)(100*status.throttle), status.rpm,
              status.cht, status.iat,
              status.baro, status.ecut, status.humidity,
              status.egt);
+
+      printf("pwm0=%d pwm1=%d pt_c=%f ticks=%u\n",
+             status.pwm0_out, status.pwm1_out, status.pt_c, inj_ticks_(rpm()) );
+
       // start next conversion
       bme_start_conversion();
       start_adc();
     }
-    //sleep(1000);
-    //_delay_ms(1000);
-  }  
+    switch (status.state)
+    {
+    case INIT:
+      if (status.pt_c > 0.0) {
+        engine_prime_ms = ticks_ms();
+        pump_enable();
+        printf("engine prime\n");
+        status.state = PRIME;
+      }
+      break;
+    case PRIME:
+      if ((ms - engine_prime_ms) > 1000) {
+        pump_disable();
+        printf("engine stopped\n");
+        status.state = STOPPED;
+      }
+      break;
+    case STOPPED:
+      if ( (ms - engine_stop_ms) > config.dwell_time_ms) {
+        if (config.auto_start) {
+          engine_start_ms = ticks_ms();
+          status.pwm1_out = config.pwm1_max;
+          set_pwm(1, status.pwm1_out);
+          pump_enable();
+          printf("engine crank\n");
+          status.state = CRANK;
+        }
+        else if (status.rpm > 0) {
+          engine_start_ms = ticks_ms();
+          ignition_enable();
+          pump_enable();
+          printf("engine start\n");
+          status.state = START;
+        }
+      }
+      break;
+    case CRANK:
+      if ((ms - engine_start_ms) > config.start_time_ms) {
+        status.pwm1_out = config.pwm1_min;
+        set_pwm(1, status.pwm1_out);
+        pump_disable();
+        engine_stop_ms = ticks_ms();
+        printf("crank failure - stopped\n");
+        status.state = STOPPED;
+      }
+      if (status.rpm > 0) {
+        ignition_enable();
+        printf("engine start\n");
+        status.state = START;
+      }
+      break;
+    case START:
+      if (config.auto_start &&
+          (status.pwm1_out == config.pwm1_max) &&
+          (ms - engine_start_ms) > config.start_time_ms) {
+        status.pwm1_out = config.pwm1_min;
+        set_pwm(1, status.pwm1_out);
+        printf("cranked\n");
+      }
+      if (status.rpm > 0 && (ms - engine_start_ms) > config.dwell_time_ms) {
+        printf("engine running\n");
+        status.state = RUNNING;
+      }
+      // fall through
+    case RUNNING:
+      if (status.rpm > config.rpm_limit)
+      {
+        ignition_disable();
+        pump_disable();
+        engine_stop_ms = ticks_ms();
+        printf("overrev - forced engine stop\n");
+        status.state = STOPPED;
+      }
+      if (!status.rpm)
+      {
+        ignition_disable();
+        pump_disable();
+        printf("engine has stopped\n");
+        status.state = STOPPED;
+      }
+      break;
+    default:
+      break;
+    }
+  }
 }
 
     
