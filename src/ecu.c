@@ -48,9 +48,9 @@ int main(void)
   setup_timers();
 
   setup_inputs();
-  printf("EMU ECU\n");
  
   sei(); // Enable Global Interrupt
+  printf("EMU ECU\n");
 
   printf("bme id (0x%02x)\n", bme_probe());
   printf("bme cd (0x%02x)\n", bme_read_calib_data());
@@ -120,6 +120,9 @@ int main(void)
       // start next conversion
       bme_start_conversion();
       start_adc();
+
+      //int c = getchar();
+      //printf("c=%d\n", c);
     }
     switch (status.state)
     {
@@ -133,6 +136,7 @@ int main(void)
       break;
     case PRIME:
       if ((ms - engine_prime_ms) > 1000) {
+        engine_stop_ms = ticks_ms();
         pump_disable();
         printf("engine stopped\n");
         status.state = STOPPED;
@@ -159,14 +163,13 @@ int main(void)
       break;
     case CRANK:
       if ((ms - engine_start_ms) > config.start_time_ms) {
+        engine_stop_ms = ticks_ms();
         status.pwm1_out = config.pwm1_min;
         set_pwm(1, status.pwm1_out);
         pump_disable();
-        engine_stop_ms = ticks_ms();
         printf("crank failure - stopped\n");
         status.state = STOPPED;
-      }
-      if (status.rpm > 0) {
+      } else if (status.rpm > 0) {
         ignition_enable();
         printf("engine start\n");
         status.state = START;
@@ -188,14 +191,15 @@ int main(void)
     case RUNNING:
       if (status.rpm > config.rpm_limit)
       {
+        engine_stop_ms = ticks_ms();
         ignition_disable();
         pump_disable();
-        engine_stop_ms = ticks_ms();
         printf("overrev - forced engine stop\n");
         status.state = STOPPED;
       }
       if (!status.rpm)
       {
+        engine_stop_ms = ticks_ms();
         ignition_disable();
         pump_disable();
         printf("engine has stopped\n");
