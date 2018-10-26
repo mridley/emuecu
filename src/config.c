@@ -4,10 +4,16 @@
 #include <string.h>
 #include "config.h"
 #include "injection.h"
+#include "log.h"
 
 // defaults
-#define PWM_MIN       (910)
-#define PWM_MAX       (2230)
+#define THR_MIN       (1000)
+#define THR_START     (1100)
+#define THR_MAX       (2000)
+#define PWM0_MIN       (910)
+#define PWM0_MAX      (2230)
+#define PWM1_MIN      (1000)
+#define PWM1_MAX      (2000)
 
 #define DWELL_TIME_MS (2000)
 #define START_TIME_MS (1000)
@@ -38,10 +44,13 @@ void config_defaults()
   config.start_time_ms = START_TIME_MS;
   config.auto_start = 5;
   config.idle_rpm = IDLE_RPM;
-  config.pwm0_max = PWM_MAX;
-  config.pwm0_min = PWM_MIN;
-  config.pwm1_max = PWM_MAX;
-  config.pwm1_min = PWM_MIN;
+  config.thr_min = THR_MIN;
+  config.thr_start = THR_START;
+  config.thr_max = THR_MAX;
+  config.pwm0_max = PWM0_MAX;
+  config.pwm0_min = PWM0_MIN;
+  config.pwm1_max = PWM1_MAX;
+  config.pwm1_min = PWM1_MIN;
   config.rpm_limit = RPM_LIMIT; // set to table boundary
   config.capacity = 35;
   config.inj_open = 900;
@@ -71,7 +80,7 @@ void config_load()
   eeprom_read_block(&config, CONFIG_EE_ADDR, sizeof(emuconfig_t));
   uint16_t checksum = calc_chksum(&config, sizeof(config) - sizeof(config.checksum));
   if (checksum != config.checksum) {
-    printf("invalid config: using defaults\n");
+    logmsgf("invalid config: using defaults");
     config_defaults();
   }
 }
@@ -84,20 +93,38 @@ void config_save()
 
 void config_dump()
 {
-  printf("dwell_time_ms : %u\n", config.dwell_time_ms);
-  printf("start_time_ms : %u\n", config.start_time_ms);
-  printf("auto_start : %u", (uint16_t)config.auto_start);
-  printf("idle_rpm : %u\n", config.idle_rpm);
-  printf("pwm0_max : %u\n", config.pwm0_max);
-  printf("pwm0_min : %u\n", config.pwm0_min);
-  printf("pwm1_max : %u\n", config.pwm1_max);
-  printf("pwm1_min : %u\n", config.pwm1_min);
-  printf("rpm_limit : %u\n", config.rpm_limit);
-  printf("version : %u\n", (uint16_t)config.version);
-  printf("checksum : 0x%04x\n", config.checksum);
-  printf("capacity: %u\n", (uint16_t)config.capacity);
-  printf("inj_open : %u\n", config.inj_open);
-  printf("inj_close : %u\n", config.inj_close);
-  printf("inj_flow : %u\n", config.inj_flow);
+  printf("{\"config\":{");
+
+  printf("\"version\":%u,", (uint16_t)config.version);
+  printf("\"thr_min\":%u,", config.thr_min);
+  printf("\"thr_start\":%u,", config.thr_start);
+  printf("\"thr_max\":%u,", config.thr_max);
+  printf("\"pwm0_min\":%u,", config.pwm0_min);
+  printf("\"pwm0_max\":%u,", config.pwm0_max);
+  printf("\"pwm1_min\":%u,", config.pwm1_min);
+  printf("\"pwm1_max\":%u,", config.pwm1_max);
+  printf("\"auto_start\":%u,", (uint16_t)config.auto_start);
+  printf("\"rpm_limit\":%u,", config.rpm_limit);
+
+  printf("\"capacity\":%u,", (uint16_t)config.capacity);
+  printf("\"inj_open\":%u,", config.inj_open);
+  printf("\"inj_close\":%u,", config.inj_close);
+  printf("\"inj_flow\":%u,", config.inj_flow);
+
+  printf("\"idle_rpm\":%u,", config.idle_rpm);
+  printf("\"dwell_time_ms\":%u,", config.dwell_time_ms);
+  printf("\"start_time_ms\":%u,", config.start_time_ms);
+
+  dump_array_int16_t("a0cal", config.a0cal, sizeof(config.a0cal)/sizeof(config.a0cal[0]));
+  printf(",");
+  dump_array_int16_t("a1cal", config.a1cal, sizeof(config.a1cal)/sizeof(config.a1cal[0]));
+  printf(",");
   inj_map_dump();
+  printf(",");
+  dump_array_int16_t("ign_adv", config.ign_adv, sizeof(config.ign_adv)/sizeof(config.ign_adv[0]));
+  printf(",");
+
+  printf("\"checksum\":\"0x%04x\"", config.checksum);
+
+  printf("}\n");
 }

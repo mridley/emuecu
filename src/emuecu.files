@@ -10,6 +10,8 @@ injection.c
 injection.h
 inputs.c
 inputs.h
+log.c
+log.h
 max6675.c
 max6675.h
 rpm.c

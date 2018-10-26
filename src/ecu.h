@@ -14,6 +14,7 @@ typedef enum  {
 
 typedef struct _ecu_status
 {
+  // inputs
   state_t  state;
   float throttle;
   uint16_t rpm;
@@ -23,10 +24,12 @@ typedef struct _ecu_status
   int16_t ecut;  // -? -
   uint32_t baro; // 0 - ~101300pa
   uint16_t humidity;
+  // internal vars
   float pt_c;
-
+  uint8_t start_attempts;
+  // outputs
   uint8_t inj_ticks;
-  uint16_t pwm0_in;
+  uint16_t thr_in;
   uint16_t pwm0_out;
   uint16_t pwm1_out;
 } emustatus_t;

@@ -39,19 +39,14 @@ void inj_map_default(void)
     {
       // guess volumetric efficiency at low rpm, ve nom at mid rpm
       float ve = VE_NOM + (VE_MAX - VE_NOM)*(float)((int8_t)(MAP_COLS - 1)/2 - i)/(float)((MAP_COLS - 1)/2U);
-      // assume 50% delivery during closing time
 
-      int16_t inj_time_us = config.inj_open;
-      int16_t adj_time_us = (int16_t)(full_inj_time_us * throttle * ve);
-      if (adj_time_us > (config.inj_close/2)) {
-        inj_time_us += (adj_time_us - (config.inj_close/2));
-      }
+      int16_t inj_time_us = (int16_t)(full_inj_time_us * throttle * ve);
       if (inj_time_us < 0) {
         inj_time_us = 0;
       } else if (inj_time_us > INJ_TIME_MAX) {
         inj_time_us = INJ_TIME_MAX;
       }
-      config.inj_map[j][i] = US2TICKS(inj_time_us);
+      config.inj_map[j][i] = (uint8_t)US2TICKS(inj_time_us);
     }
   }
 }
@@ -98,19 +93,32 @@ uint8_t inj_ticks_(uint16_t rpm)
   }
   int16_t dt_s1 = ((int16_t)_inj_row[col+1] - (int16_t)_inj_row[col]) >> 1; // make fit in int8_t
   int16_t dt_s = (dt_s1 * ((rpm & RPM_MASK) >> (MAP_RPM_BITS_PER_COL - 8) )); // int8_t * uint8_t
-  uint8_t t = _inj_row[col] + (uint8_t)(dt_s >> 7); // 7 + 1 above for 8 bits not shifted
-  return t;
+  int16_t t_ticks = (int16_t)_inj_row[col] + (dt_s >> 7); // 7 + 1 above for 8 bits not shifted
+
+  // Q: how much of the close time delivers fuel ? Attribute 0 for now.
+  uint16_t t_us = config.inj_open + TICKS2US(t_ticks);
+  if (t_us > INJ_TIME_MAX) {
+    t_us = INJ_TIME_MAX;
+  }
+
+  return (uint8_t)US2TICKS(t_us);
 }
 
 void inj_map_dump(void)
 {
-  for (uint8_t j = 0; j < MAP_ROWS; j++)
-  {
+  printf("\"map\":[");
+  for (uint8_t j = 0; j < MAP_ROWS;) {
     printf("[");
-    for (uint8_t i = 0; i < MAP_COLS; i++)
-    {
-      printf("%04d ", (int16_t)TICKS2US(config.inj_map[j][i]));
+    for (uint8_t i = 0; i < MAP_COLS;) {
+      printf("%04d", TICKS2US((uint16_t)config.inj_map[j][i]));
+      if (++i < MAP_COLS) {
+        printf(",");
+      }
     }
-    printf("]\n");
+    printf("]");
+    if (++j < MAP_ROWS) {
+      printf(",");
+    }
   }
+  printf("]");
 }

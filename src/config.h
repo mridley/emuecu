@@ -20,6 +20,9 @@
 typedef struct _config
 {
   uint8_t  version;   // int
+  uint16_t thr_min;   // us thr input for 0%
+  uint16_t thr_start; // us thr input for start
+  uint16_t thr_max;   // us thr input for 100%
   uint16_t pwm0_min;  // us throttle
   uint16_t pwm0_max;  // us
   uint16_t pwm1_min;  // us starter?
@@ -40,7 +43,7 @@ typedef struct _config
   int16_t  a0cal[A_TAB_SIZE]; // 100*degrees
   int16_t  a1cal[A_TAB_SIZE]; // 100*degrees
   uint8_t  inj_map[MAP_ROWS][MAP_COLS];   // [throttle  ][rpm] ticks (16us)
-  int8_t   ign_adv[MAP_COLS];
+  int16_t   ign_adv[MAP_COLS];
 
   uint16_t checksum;
 } emuconfig_t;
