@@ -110,7 +110,7 @@ void inj_map_dump(void)
   for (uint8_t j = 0; j < MAP_ROWS;) {
     printf("[");
     for (uint8_t i = 0; i < MAP_COLS;) {
-      printf("%04d", TICKS2US((uint16_t)config.inj_map[j][i]));
+      printf("%d", TICKS2US((uint16_t)config.inj_map[j][i]));
       if (++i < MAP_COLS) {
         printf(",");
       }

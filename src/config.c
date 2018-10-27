@@ -126,5 +126,5 @@ void config_dump()
 
   printf("\"checksum\":\"0x%04x\"", config.checksum);
 
-  printf("}\n");
+  printf("}}\n");
 }

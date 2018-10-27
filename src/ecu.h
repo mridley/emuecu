@@ -26,7 +26,7 @@ typedef struct _ecu_status
   uint16_t humidity;
   // internal vars
   float pt_c;
-  uint8_t start_attempts;
+  uint8_t starts;
   // outputs
   uint8_t inj_ticks;
   uint16_t thr_in;

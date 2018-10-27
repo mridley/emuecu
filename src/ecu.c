@@ -109,9 +109,9 @@ int main(void)
              status.cht, status.iat);
       printf("{\"status\":{\"baro\":%lu,\"ecut\":%d,\"humidity\":%u,\"egt\":%lu}}\n",
              status.baro, status.ecut, status.humidity, status.egt);
-      printf("{\"status\":{\"pt_c\":%f,\"start_attempts\":%u}}\n",
-             status.pt_c, status.start_attempts);
-      printf("{\"status\":{\"pwm0_out\":%d,\"pwm1_out\":%d,\"inj_ticks\"=%u}}\n",
+      printf("{\"status\":{\"pt_c\":%f,\"starts\":%u}}\n",
+             status.pt_c, status.starts);
+      printf("{\"status\":{\"pwm0_out\":%d,\"pwm1_out\":%d,\"inj_ticks\":%u}}\n",
              status.pwm0_out, status.pwm1_out, inj_ticks_(rpm()) );
 
       // start next conversion
@@ -143,12 +143,12 @@ int main(void)
       if ( (ms - engine_stop_ms) > config.dwell_time_ms) {
         if (config.auto_start &&
             (status.thr_in < config.thr_start)) {
-          status.start_attempts = 0;
+          status.starts = 0;
         }
         if (config.auto_start &&
             (status.thr_in > config.thr_start) &&
-            (status.start_attempts < config.auto_start)) {
-          status.start_attempts++;
+            (status.starts < config.auto_start)) {
+          status.starts++;
           engine_start_ms = ticks_ms();
           status.pwm1_out = config.pwm1_max;
           set_pwm(1, status.pwm1_out);
@@ -188,7 +188,7 @@ int main(void)
         logmsgf("cranked");
       }
       if (status.rpm > 0 && (ms - engine_start_ms) > config.dwell_time_ms) {
-        status.start_attempts = 0;
+        status.starts = 0;
         logmsgf("engine running");
         status.state = RUNNING;
       }
