@@ -40,7 +40,7 @@ void inj_map_default(void)
       // guess volumetric efficiency at low rpm, ve nom at mid rpm
       float ve = VE_NOM + (VE_MAX - VE_NOM)*(float)((int8_t)(MAP_COLS - 1)/2 - i)/(float)((MAP_COLS - 1)/2U);
 
-      int16_t inj_time_us = (int16_t)(full_inj_time_us * throttle * ve);
+      int16_t inj_time_us = (int16_t)(FUDGE_MULT * full_inj_time_us * throttle * ve) + FUDGE_ADD;
       if (inj_time_us < 0) {
         inj_time_us = 0;
       } else if (inj_time_us > INJ_TIME_MAX) {
@@ -57,10 +57,16 @@ const uint16_t RPM_MASK = (1 << MAP_RPM_BITS_PER_COL) - 1;
 // the current active row (based on throttle position)
 static uint8_t _inj_row[MAP_COLS] = {0};
 
-float inj_pt_correction(uint32_t baro, int16_t iat)
+float inj_pt_correction(uint32_t baro, int16_t iat, int16_t cht, bool cranking)
 {
   // baro*temp is bigger than INT_MAX cast to uint32_t
   float pt_c = (float)(baro*(uint32_t)(ZEROC_KELVIN+TEMP_REF_CDEGC)/(float)(BARO_MSLP_PA*(uint32_t)(ZEROC_KELVIN+iat)));
+  if (cht < CHT_ENRICH_THRESH) {
+    pt_c += CHT_ENRICH_FACTOR*(float)(CHT_ENRICH_THRESH - cht)/(float)CHT_ENRICH_THRESH;
+  }
+  if (cranking) {
+    pt_c += CRANKING_ENRICH_FACTOR;
+  }
   return pt_c;
 }
 
@@ -76,7 +82,9 @@ void inj_map_update_row(float throttle, float pt_c)
   for (uint8_t i = 0U; i < MAP_COLS; ++i)
   {
     float v_uc = (float)config.inj_map[row][i] + wgt * (config.inj_map[row + 1][i] - config.inj_map[row][i]);
-    tmp[i] = (uint8_t)(v_uc*pt_c);
+    float val = (v_uc*pt_c);
+
+    tmp[i] = (val < INJ_TICKS_MAX) ? (uint8_t)val : INJ_TICKS_MAX;
   }
   ATOMIC_BLOCK(ATOMIC_FORCEON)
   {

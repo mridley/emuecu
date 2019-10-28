@@ -37,7 +37,9 @@ int main(void)
   emustatus_t status = {0};
   uart0_init();
 
-  config_load();
+  //config_load();
+  config_defaults();
+  config_save();
   config_dump();
   //config_save();
 
@@ -97,9 +99,9 @@ int main(void)
         status.baro = bme_baro();
         status.ecut = bme_temp();
         status.humidity = bme_humidity();
-        status.pt_c = inj_pt_correction(status.baro, status.iat);
+        status.pt_c = inj_pt_correction(status.baro, status.iat, status.cht, status.state == START);
       } else {
-        status.pt_c = inj_pt_correction(BARO_MSLP_PA, status.iat);
+        status.pt_c = inj_pt_correction(BARO_MSLP_PA, status.iat, status.cht, status.state == START);
       }
 
       status.egt = max6675_read();
@@ -199,7 +201,19 @@ int main(void)
         engine_stop_ms = ticks_ms();
         ignition_disable();
         pump_disable();
+        status.pwm1_out = config.pwm1_min;
+        set_pwm(1, status.pwm1_out);
         logmsgf("overrev - engine stopped");
+        status.state = STOPPED;
+      }
+      if (status.throttle <= 0.0f )
+      {
+        engine_stop_ms = ticks_ms();
+        ignition_disable();
+        pump_disable();
+        status.pwm1_out = config.pwm1_min;
+        set_pwm(1, status.pwm1_out);
+        logmsgf("throttle - engine stopped");
         status.state = STOPPED;
       }
       if (!status.rpm)
