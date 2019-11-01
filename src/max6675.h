@@ -19,6 +19,6 @@
 #define MAX6675_ERR_SENSOR  (-4)
 
 void max6675_init();
-uint32_t max6675_read();
+int32_t max6675_read();
 
 #endif

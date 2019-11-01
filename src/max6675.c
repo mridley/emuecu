@@ -14,7 +14,7 @@ void max6675_init()
 /*
  * @brief returns temperature in hundreths of a degree i.e. 25.43 deg C returns 2543
  */
-uint32_t max6675_read()
+int32_t max6675_read()
 {
   uint16_t data = 0;
   PORTB &= ~_BV(MAX6675_CS); // CS asserted

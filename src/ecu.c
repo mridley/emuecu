@@ -31,10 +31,32 @@ inline uint16_t clamp_pwm(uint16_t v, uint16_t pwm_min, uint16_t pwm_max)
   return v;
 }
 
+emustatus_t status = {0};
+
+void engine_crank(bool crank)
+{
+  if (crank)
+  {
+    status.pwm1_out = config.pwm1_max;
+    set_pwm(1, status.pwm1_out);
+  }
+  else
+  {
+    status.pwm1_out = config.pwm1_min;
+    set_pwm(1, status.pwm1_out);
+  }
+}
+
+void engine_stop()
+{
+  status.engine_stop_ms = ticks_ms();
+  ignition_disable();
+  pump_disable();
+  engine_crank(false);
+}
 
 int main(void)
 {
-  emustatus_t status = {0};
   uart0_init();
 
   //config_load();
@@ -59,9 +81,8 @@ int main(void)
   start_adc();
   sleep(10);
 
-  uint16_t engine_stop_ms = ticks_ms();
-  uint16_t engine_start_ms = ticks_ms();
-  uint16_t engine_prime_ms;
+  status.engine_stop_ms = ticks_ms();
+  status.engine_start_ms = ticks_ms();
   uint16_t loop_ms = ticks_ms() - 1000;
   while (1)
   {
@@ -79,13 +100,13 @@ int main(void)
     inj_map_update_row(status.throttle, status.pt_c);
 
     // keep the start/stop times sliding to prevent wraps
-    if ((ms - engine_stop_ms) > 2*config.dwell_time_ms)
+    if ((ms - status.engine_stop_ms) > 2*config.dwell_time_ms)
     {
-      engine_stop_ms = ms - config.dwell_time_ms;
+      status.engine_stop_ms = ms - config.dwell_time_ms;
     }
-    if ((ms - engine_start_ms) > 2*config.dwell_time_ms)
+    if ((ms - status.engine_start_ms) > 2*config.dwell_time_ms)
     {
-      engine_start_ms = ms - config.dwell_time_ms;
+      status.engine_start_ms = ms - config.dwell_time_ms;
     }
     // 1 second tasks
     if ((ms - loop_ms) >= 1000)
@@ -104,7 +125,12 @@ int main(void)
         status.pt_c = inj_pt_correction(BARO_MSLP_PA, status.iat, status.cht, status.state == START);
       }
 
-      status.egt = max6675_read();
+      int32_t tval = max6675_read();
+      if (tval >= 0) {
+        status.egt = tval;
+      } else {
+        logmsgf("max6675 error: %d", tval);
+      }
 
       printf("{\"status\":{\"thr_in\":%d,\"throttle\":%d,\"rpm\":%u,\"cht\":%d,\"iat\":%d}}\n",
              status.thr_in, (int)(100*status.throttle), status.rpm,
@@ -127,22 +153,21 @@ int main(void)
     {
     case INIT:
       if (status.pt_c > 0.0) {
-        engine_prime_ms = ticks_ms();
+        status.engine_prime_ms = ticks_ms();
         pump_enable();
         logmsgf("engine prime");
         status.state = PRIME;
       }
       break;
     case PRIME:
-      if ((ms - engine_prime_ms) > 1000) {
-        engine_stop_ms = ticks_ms();
-        pump_disable();
+      if ((ms - status.engine_prime_ms) > 1000) {
+        engine_stop();
         logmsgf("engine stopped");
         status.state = STOPPED;
       }
       break;
     case STOPPED:
-      if ( (ms - engine_stop_ms) > config.dwell_time_ms) {
+      if ( (ms - status.engine_stop_ms) > config.dwell_time_ms) {
         if (config.auto_start &&
             (status.thr_in < config.thr_start)) {
           status.starts = 0;
@@ -151,15 +176,13 @@ int main(void)
             (status.thr_in > config.thr_start) &&
             (status.starts < config.auto_start)) {
           status.starts++;
-          engine_start_ms = ticks_ms();
-          status.pwm1_out = config.pwm1_max;
-          set_pwm(1, status.pwm1_out);
+          status.engine_start_ms = ticks_ms();
+          engine_crank(true);
           pump_enable();
           logmsgf("engine crank");
           status.state = CRANK;
-        }
-        else if (status.rpm > 0) {
-          engine_start_ms = ticks_ms();
+        } else if (status.rpm > 0) {
+          status.engine_start_ms = ticks_ms();
           ignition_enable();
           pump_enable();
           logmsgf("engine start");
@@ -168,11 +191,8 @@ int main(void)
       }
       break;
     case CRANK:
-      if ((ms - engine_start_ms) > config.start_time_ms) {
-        engine_stop_ms = ticks_ms();
-        status.pwm1_out = config.pwm1_min;
-        set_pwm(1, status.pwm1_out);
-        pump_disable();
+      if ((ms - status.engine_start_ms) > config.start_time_ms) {
+        engine_stop();
         logmsgf("crank failure - engine stopped");
         status.state = STOPPED;
       } else if (status.rpm > 0) {
@@ -184,43 +204,28 @@ int main(void)
     case START:
       if (config.auto_start &&
           (status.pwm1_out == config.pwm1_max) &&
-          (ms - engine_start_ms) > config.start_time_ms) {
-        status.pwm1_out = config.pwm1_min;
-        set_pwm(1, status.pwm1_out);
+          ((ms - status.engine_start_ms) > config.start_time_ms)) {
+        engine_crank(false);
         logmsgf("cranked");
       }
-      if (status.rpm > 0 && (ms - engine_start_ms) > config.dwell_time_ms) {
+      if ((status.rpm > 0) &&
+          ((ms - status.engine_start_ms) > config.dwell_time_ms)) {
         status.starts = 0;
         logmsgf("engine running");
         status.state = RUNNING;
       }
       // fall through
     case RUNNING:
-      if (status.rpm > config.rpm_limit)
-      {
-        engine_stop_ms = ticks_ms();
-        ignition_disable();
-        pump_disable();
-        status.pwm1_out = config.pwm1_min;
-        set_pwm(1, status.pwm1_out);
+      if (status.rpm > config.rpm_limit) {
+        engine_stop();
         logmsgf("overrev - engine stopped");
         status.state = STOPPED;
-      }
-      if (status.throttle <= 0.0f )
-      {
-        engine_stop_ms = ticks_ms();
-        ignition_disable();
-        pump_disable();
-        status.pwm1_out = config.pwm1_min;
-        set_pwm(1, status.pwm1_out);
+      } else if (status.throttle <= 0.0f ) {
+        engine_stop();
         logmsgf("throttle - engine stopped");
         status.state = STOPPED;
-      }
-      if (!status.rpm)
-      {
-        engine_stop_ms = ticks_ms();
-        ignition_disable();
-        pump_disable();
+      } else if (!status.rpm) {
+        engine_stop();
         logmsgf("engine stopped");
         status.state = STOPPED;
       }
@@ -230,5 +235,3 @@ int main(void)
     }
   }
 }
-
-    

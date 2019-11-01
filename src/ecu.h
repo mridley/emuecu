@@ -27,6 +27,9 @@ typedef struct _ecu_status
   // internal vars
   float pt_c;
   uint8_t starts;
+  uint16_t engine_stop_ms;
+  uint16_t engine_start_ms;
+  uint16_t engine_prime_ms;
   // outputs
   uint8_t inj_ticks;
   uint16_t thr_in;
