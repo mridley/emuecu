@@ -9,9 +9,13 @@
 #include "injection.h"
 #include "rpm.h"
 
-volatile uint32_t timer_1_ovf_ = 0;
-volatile uint32_t timer_2_500us_ = 0;
+static volatile uint32_t timer_1_ovf_ = 0;
+static volatile uint32_t timer_2_500us_ = 0;
 volatile uint32_t timer_2_ovf_ = 0;
+/* ticks remaining */
+static volatile inj_ticks_t inj_ticks_rem_ = 0;
+/* max partial ticks loaded each isr */
+static volatile uint8_t inj_ticks_part_ = 0;
 
 uint16_t pwm_[2] = {1500, 1500};
 uint8_t pump_enabled_ = 0;
@@ -52,11 +56,18 @@ ISR(TIMER0_OVF_vect)  // timer0 overflow interrupt
 void do_injection(uint32_t ticks_per_rev_us)
 {
   uint16_t rpm = rpm_from_us(ticks_per_rev_us);
-  if (rpm)
-  {
+  if (rpm) {
+    TIMSK0 &= ~_BV(OCIE0A); // force disable in case
+    inj_ticks_rem_ = inj_ticks_(rpm);
+    inj_ticks_t inj_ticks_part = inj_ticks_rem_;
+    // so multiple ISR are evenly spaced
+    while (inj_ticks_part > 255U) {
+      inj_ticks_part >>= 1;
+    }
+    inj_ticks_part_ = (uint8_t)(inj_ticks_part&0x00FF);
+    inj_ticks_rem_ -= inj_ticks_part_;
     PORTD |= _BV(PD6); // Injector on
-    uint8_t ticks = inj_ticks_(rpm);
-    OCR0A = TCNT0 + ticks; // set delay
+    OCR0A = TCNT0 + inj_ticks_part_;
     // enable the OC interrupt
     TIMSK0 |= _BV(OCIE0A);
     TIFR0 |= _BV(OCF0A); // clear interrupt flag
@@ -65,8 +76,16 @@ void do_injection(uint32_t ticks_per_rev_us)
 
 ISR(TIMER0_COMPA_vect)  // timer0 compa interrupt
 {
-  PORTD &= ~_BV(PD6);     // Injector off
-  TIMSK0 &= ~_BV(OCIE0A); // disable until next time
+  if (inj_ticks_rem_ > inj_ticks_part_) { // next part
+    OCR0A = TCNT0 + inj_ticks_part_;
+    inj_ticks_rem_ -= inj_ticks_part_;
+  } else if (inj_ticks_rem_) { // last interrupt
+    OCR0A = TCNT0 + (uint8_t)(inj_ticks_rem_&0x00FF);
+    inj_ticks_rem_ = 0;
+  } else { // all done
+    PORTD &= ~_BV(PD6);     // Injector off
+    TIMSK0 &= ~_BV(OCIE0A); // disable until next time
+  }
 }
 
 void pump_enable()
@@ -154,8 +173,10 @@ ISR(TIMER2_COMPA_vect)  // timer2 compa interrupt
   OCR2A += 0xFA; // ++ 250
 }
 
-void setup_timers()
+void setup_timers(uint16_t pwm0, uint16_t pwm1)
 {
+  pwm_[0] = pwm0;
+  pwm_[1] = pwm1;
   setup_timer0();
   setup_timer1();
   setup_timer2();

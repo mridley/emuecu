@@ -3,8 +3,6 @@
 
 #include <stdint.h>
 
-extern volatile uint32_t timer_0_1ms_;
-extern volatile uint32_t timer_1_ovf_;
 extern volatile uint32_t timer_2_ovf_;
 
 inline uint32_t tcnt2_us_()
@@ -22,7 +20,7 @@ inline uint32_t tcnt2_us_()
   return (uint32_t)(tcnt2 << 1) | ((timer_2_ovf_ + ovf) << 9);
 }
 
-void setup_timers();
+void setup_timers(uint16_t pwm0, uint16_t pwm1);
 void set_pwm(uint8_t c, uint16_t v);
 void set_injection_us(uint16_t dur);
 void do_injection();

@@ -16,7 +16,8 @@ typedef struct _ecu_status
 {
   // inputs
   state_t  state;
-  float throttle;
+  float throttle_in;
+  float throttle_out;
   uint16_t rpm;
   int16_t cht;   // -? - ~100
   int16_t iat;   // -? - 80

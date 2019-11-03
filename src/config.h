@@ -6,6 +6,7 @@
 #endif
 
 #include <stdint.h>
+#include "emu_types.h"
 
 #define PWM_LIMIT      (2500)
 #define RPM_LIMIT      (15000)
@@ -42,8 +43,8 @@ typedef struct _config
   // tables and calibration
   int16_t  a0cal[A_TAB_SIZE]; // 100*degrees
   int16_t  a1cal[A_TAB_SIZE]; // 100*degrees
-  uint8_t  inj_map[MAP_ROWS][MAP_COLS];   // [throttle  ][rpm] ticks (16us)
-  int16_t   ign_adv[MAP_COLS];
+  inj_ticks_t inj_map[MAP_ROWS][MAP_COLS];   // [throttle  ][rpm] ticks (16us)
+  int16_t  ign_adv[MAP_COLS]; // TODO
 
   uint16_t checksum;
 } emuconfig_t;

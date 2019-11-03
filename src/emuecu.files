@@ -5,6 +5,7 @@ config.c
 config.h
 ecu.c
 ecu.h
+emu_types.h
 i2cmaster.h
 injection.c
 injection.h
