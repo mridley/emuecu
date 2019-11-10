@@ -45,7 +45,7 @@ const uint16_t RPM_MASK = (1 << MAP_RPM_BITS_PER_COL) - 1;
 // the current active row (based on throttle position)
 static inj_ticks_t _inj_row[MAP_COLS] = {0};
 
-float inj_corrections(uint32_t baro, int16_t iat, int16_t cht, bool cranking)
+float inj_corrections(uint32_t baro, int16_t iat, int16_t cht, uint16_t run_time_ms)
 {
   // baro*temp is bigger than INT_MAX cast to uint32_t
   float pt_c = (float)(baro*(uint32_t)(ZEROC_KELVIN+TEMP_REF_CDEGC)/(float)(BARO_MSLP_PA*(uint32_t)(ZEROC_KELVIN+iat)));
@@ -57,14 +57,16 @@ float inj_corrections(uint32_t baro, int16_t iat, int16_t cht, bool cranking)
     pt_c *= cht_c;
   }
   if (cht > CHT_HOT_ENRICH_T) {
-    float cht_c = 1.0f + CHT_ENRICH_RATE*0.01*(float)(cht - CHT_HOT_ENRICH_T - cht);
+    float cht_c = 1.0f + CHT_ENRICH_RATE*0.01*(float)(cht - CHT_HOT_ENRICH_T);
     if (cht_c > CHT_ENRICH_MAXFACTOR) {
       cht_c = CHT_ENRICH_MAXFACTOR;
     }
     pt_c *= cht_c;
   }
-  if (cranking) {
-    pt_c *= CRANKING_ENRICH_FACTOR;
+  if (run_time_ms < config.dwell_time_ms) {
+    pt_c *= START_ENRICH_FACTOR;
+  } else if (run_time_ms < 2*config.dwell_time_ms) {
+    pt_c *= START_ENRICH_FACTOR *((float)(2*config.dwell_time_ms-run_time_ms)/(float)config.dwell_time_ms);
   }
   return pt_c;
 }

@@ -55,9 +55,19 @@ void engine_stop()
   engine_crank(false);
 }
 
-float throttle()
+float throttle(uint16_t run_time_ms)
 {
-  return status.throttle_in;
+  float throttle_start = (float)(config.thr_start - config.thr_min)/(float)(config.thr_max-config.thr_min);
+  if (CRANK == status.state || START == status.state) {
+    return throttle_start;
+  } else if ((RUNNING == status.state) &&
+             (run_time_ms > config.dwell_time_ms) &&
+             (run_time_ms < 2*config.dwell_time_ms)) {
+    float wgt = (float)(run_time_ms - config.dwell_time_ms)/(float)config.dwell_time_ms;
+    return wgt * status.throttle_in + (1.0 - wgt) * throttle_start;
+  } else {
+    return status.throttle_in;
+  }
 }
 
 void default_state()
@@ -91,37 +101,41 @@ int main(void)
   start_adc();
   sleep(10);
 
-  status.engine_stop_ms = ticks_ms();
-  status.engine_start_ms = ticks_ms();
-  uint16_t loop_ms = ticks_ms() - 1000;
+  uint16_t ms = ticks_ms();
+  status.engine_stop_ms = ms;
+  status.engine_start_ms = ms;
+  uint16_t loop_ms = ms - 1000;
   while (1)
   {
-    uint16_t ms = ticks_ms();
+    ms = ticks_ms();
+    // keep the start/stop times sliding to prevent wraps
+    if ((ms - status.engine_stop_ms) > INT16_MAX)
+    {
+      status.engine_stop_ms = ms - INT16_MAX;
+    }
+    if ((ms - status.engine_start_ms) > INT16_MAX)
+    {
+      status.engine_start_ms = ms - INT16_MAX;
+    }
+    uint16_t run_time_ms = 0U;
+    if (RUNNING == status.state || START == status.state || CRANK == status.state) {
+      run_time_ms = (ms - status.engine_start_ms);
+    }
     status.rpm = rpm();
     status.thr_in = pwm_input();
     uint16_t thr_clamped = clamp_pwm(status.thr_in, config.thr_min, config.thr_max);
-    const float t_scale = 1.0 / (float)(config.thr_max - config.thr_min);
+    const float t_scale = 1.0f / (float)(config.thr_max - config.thr_min);
     status.throttle_in = (float)(thr_clamped - config.thr_min) * t_scale;
-    status.throttle_out = throttle();
+    status.throttle_out = throttle(run_time_ms);
 
     status.pwm0_out = clamp_pwm(config.pwm0_min + (uint16_t)(status.throttle_out*(config.pwm0_max-config.pwm0_min)),
                                 config.pwm0_min, config.pwm0_max);
     set_pwm(0, status.pwm0_out);
 
-    status.pt_c = inj_corrections(status.baro, status.iat, status.cht,
-                                  status.state == START);
+    status.pt_c = inj_corrections(status.baro, status.iat, status.cht, run_time_ms);
 
     inj_map_update_row(status.throttle_out, status.pt_c);
 
-    // keep the start/stop times sliding to prevent wraps
-    if ((ms - status.engine_stop_ms) > 2*config.dwell_time_ms)
-    {
-      status.engine_stop_ms = ms - config.dwell_time_ms;
-    }
-    if ((ms - status.engine_start_ms) > 2*config.dwell_time_ms)
-    {
-      status.engine_start_ms = ms - config.dwell_time_ms;
-    }
     // 1 second tasks
     if ((ms - loop_ms) >= 1000)
     {
@@ -203,7 +217,7 @@ int main(void)
       }
       break;
     case CRANK:
-      if ((ms - status.engine_start_ms) > config.start_time_ms) {
+      if (run_time_ms > config.start_time_ms) {
         engine_stop();
         logmsgf("crank failure - engine stopped");
         status.state = STOPPED;
@@ -216,12 +230,12 @@ int main(void)
     case START:
       if (config.auto_start &&
           (status.pwm1_out == config.pwm1_max) &&
-          ((ms - status.engine_start_ms) > config.start_time_ms)) {
+          (run_time_ms > config.start_time_ms)) {
         engine_crank(false);
         logmsgf("cranked");
       }
       if ((status.rpm > 0) &&
-          ((ms - status.engine_start_ms) > config.dwell_time_ms)) {
+          (run_time_ms > config.dwell_time_ms)) {
         status.starts = 0;
         logmsgf("engine running");
         status.state = RUNNING;

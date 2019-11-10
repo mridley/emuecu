@@ -8,7 +8,7 @@
 
 // defaults
 #define THR_MIN       (1000)
-#define THR_START     (1050)
+#define THR_START     (1070)
 #define THR_MAX       (2000)
 #define PWM0_MIN      (1000)
 #define PWM0_MAX      (2080)

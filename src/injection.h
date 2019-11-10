@@ -34,12 +34,12 @@
 // CHT cold enrichment threshold 50 deg
 #define CHT_COLD_ENRICH_T (5000)
 // CHT hot enrichment threshold 100 deg
-#define CHT_HOT_ENRICH_T (10000)
+#define CHT_HOT_ENRICH_T (9000)
 
 // enrichment per deg
 #define CHT_ENRICH_RATE (0.005f)
 #define CHT_ENRICH_MAXFACTOR (1.5f)
-#define CRANKING_ENRICH_FACTOR (1.5f)
+#define START_ENRICH_FACTOR (2.5f)
 
 #define US2TICKS(a)    ((a) >> 4)
 #define TICKS2US(a)    ((a) << 4)
@@ -51,7 +51,7 @@
 
 #define MAP_MAX_RPM ((MAP_COLS-1)<<MAP_RPM_BITS_PER_COL)
 
-float inj_corrections(uint32_t baro, int16_t iat, int16_t cht, bool cranking);
+float inj_corrections(uint32_t baro, int16_t iat, int16_t cht, uint16_t run_time_ms);
 void inj_map_update_row(float throttle, float pt_c);
 void inj_map_default(void);
 void inj_map_dump(void);

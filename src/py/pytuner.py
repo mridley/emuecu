@@ -6,7 +6,7 @@ import serial
 import json
 
 log_rows = 12
-status_space = 20
+status_space = 24
 
 def main_window(y,x):
     win1_rows = y - log_rows
@@ -47,7 +47,7 @@ def status_display(win, status):
     current_status.update(status)
     itms = sorted(current_status.items())
     for i in range(0,len(current_status)):
-      s = "%10s:%9s" % (itms[i][0], str(itms[i][1]))
+      s = "%12s:%9s" % (itms[i][0], str(itms[i][1]))
       win.addstr(1 + i/2, 1 + (i%2)*status_space, s, curses.color_pair(1))
     
     win.bkgd(' ', curses.color_pair(1))
