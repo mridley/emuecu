@@ -137,9 +137,9 @@ int main(void)
     inj_map_update_row(status.throttle_out, status.pt_c);
 
     // 1 second tasks
-    if ((ms - loop_ms) >= 1000)
+    if ((ms - loop_ms) >= 200)
     {
-      loop_ms += 1000;
+      loop_ms += 200;
 
       status.cht = interp_a_tab(config.a0cal, analogue(0));
       status.iat = interp_a_tab(config.a1cal, analogue(1));
