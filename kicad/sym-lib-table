@@ -1,0 +1,6 @@
+(sym_lib_table
+  (lib (name 7805)(type Legacy)(uri ${KIPRJMOD}/7805.lib)(options "")(descr ""))
+  (lib (name decent)(type Legacy)(uri ${KIPRJMOD}/decent.lib)(options "")(descr ""))
+  (lib (name mosfets)(type Legacy)(uri ${KIPRJMOD}/mosfets.lib)(options "")(descr ""))
+  (lib (name arduino)(type Legacy)(uri ${KIPRJMOD}/arduino.lib)(options "")(descr ""))
+)
