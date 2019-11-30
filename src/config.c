@@ -219,12 +219,21 @@ void config_show(char *name)
                 printf("%s=%d\n", name, *(int16_t *)c->ptr);
                 break;
             case CTYPE_INT16_ARRAY:
-                if (idx1 >= 0 && idx1 < c->tsize1) {
+                if (idx1 == -1) {
+                    for (uint8_t i=0; i<c->tsize1; i++) {
+                        printf("%s[%d]=%d\n", name, i, ((int16_t *)c->ptr)[i]);
+                    }
+                } else if (idx1 >= 0 && idx1 < c->tsize1) {
                     printf("%s[%d]=%d\n", name, idx1, ((int16_t *)c->ptr)[idx1]);
                 }
                 break;
             case CTYPE_UINT16_2D_ARRAY:
-                if (idx1 >= 0 && idx1 < c->tsize1 && idx2 >= 0 && idx2 < c->tsize2) {
+                if (idx1 >= 0 && idx1 < c->tsize1 && idx2 == -1) {
+                    // show row
+                    for (uint8_t i=0; i<c->tsize2; i++) {
+                        printf("%s[%d][%d]=%d\n", name, idx1, i, ((uint16_t *)c->ptr)[idx1*c->tsize1+i]);
+                    }
+                } else if (idx1 >= 0 && idx1 < c->tsize1 && idx2 >= 0 && idx2 < c->tsize2) {
                     printf("%s[%d][%d]=%u\n", name, idx1, idx2, ((uint16_t *)c->ptr)[idx1*c->tsize1+idx2]);
                 }
                 break;
