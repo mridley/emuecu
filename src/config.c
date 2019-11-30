@@ -2,6 +2,7 @@
 #include <avr/pgmspace.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 #include "config.h"
 #include "injection.h"
 #include "log.h"
@@ -91,6 +92,48 @@ void config_save()
   eeprom_update_block(&config, CONFIG_EE_ADDR, sizeof(emuconfig_t));
 }
 
+#define ARRAY_LEN(x) (sizeof(x)/sizeof(x[0]))
+
+enum config_type {
+    CTYPE_UINT8,
+    CTYPE_UINT16,
+    CTYPE_INT16,
+    CTYPE_INT16_ARRAY,
+    CTYPE_UINT16_2D_ARRAY,
+};
+
+static const struct ctable {
+    const char *name;
+    enum config_type type;
+    void *ptr;
+    uint8_t tsize1, tsize2;
+} config_table[] = {
+    { "version", CTYPE_UINT8, &config.version },
+    { "thr_min", CTYPE_UINT16, &config.thr_min },
+    { "thr_start", CTYPE_UINT16, &config.thr_start },
+    { "thr_max", CTYPE_UINT16, &config.thr_max },
+    { "pwm0_min", CTYPE_UINT16, &config.pwm0_min },
+    { "pwm0_max", CTYPE_UINT16, &config.pwm0_max },
+    { "pwm1_min", CTYPE_UINT16, &config.pwm1_min },
+    { "pwm1_max", CTYPE_UINT16, &config.pwm1_max },
+    { "auto_start", CTYPE_UINT8, &config.auto_start },
+    { "rpm_limit", CTYPE_UINT16, &config.rpm_limit },
+    { "capacity", CTYPE_UINT8, &config.capacity },
+    { "inj_open", CTYPE_UINT16, &config.inj_open },
+    { "inj_close", CTYPE_UINT16, &config.inj_close },
+    { "inj_flow", CTYPE_UINT16, &config.inj_flow },
+    { "idle_rpm", CTYPE_UINT16, &config.idle_rpm },
+    { "dwell_time_ms", CTYPE_UINT16, &config.dwell_time_ms },
+    { "start_time_ms", CTYPE_UINT16, &config.start_time_ms },
+    { "checksum", CTYPE_UINT16, &config.checksum },
+    { "a0cal", CTYPE_INT16_ARRAY, &config.a0cal[0], ARRAY_LEN(config.a0cal) },
+    { "a1cal", CTYPE_INT16_ARRAY, &config.a1cal[0], ARRAY_LEN(config.a1cal) },
+    { "ign_adv", CTYPE_INT16_ARRAY, &config.ign_adv[0], ARRAY_LEN(config.ign_adv) },
+    { "inj_map", CTYPE_UINT16_2D_ARRAY, &config.inj_map[0][0], ARRAY_LEN(config.inj_map), ARRAY_LEN(config.inj_map[0]) },
+};
+
+#define CONFIG_TABLE_LEN ARRAY_LEN(config_table)
+
 void config_dump()
 {
   printf("{\"config\":{");
@@ -127,4 +170,101 @@ void config_dump()
   printf("\"checksum\":\"0x%04x\"", config.checksum);
 
   printf("}}\n");
+}
+
+/*
+  parse array reference xxx[idx1][idx2]
+  if an array referene is found then name is truncated at the first [
+*/
+static void parse_array_name(char *name, int8_t *idx1, int8_t *idx2)
+{
+    char *p = strchr(name,'[');
+    if (p == NULL) {
+        return;
+    }
+    *p = 0;
+    int8_t i = strtol(p+1, &p, 10);
+    if (!p || *p != ']') {
+        return;
+    }
+    *idx1 = i;
+    if (p[1] == '[') {
+        i = strtol(p+2, &p, 10);
+        if (!p || *p != ']') {
+            return;
+        }
+        *idx2 = i;
+    }
+}
+
+
+/*
+  show a config variable
+ */
+void config_show(char *name)
+{
+    int8_t idx1=-1, idx2=-1;
+    parse_array_name(name, &idx1, &idx2);
+    for (uint8_t i=0; i<CONFIG_TABLE_LEN; i++) {
+        const struct ctable *c = &config_table[i];
+        if (strcmp(name, c->name) == 0) {
+            switch (c->type) {
+            case CTYPE_UINT8:
+                printf("%s=%u\n", name, *(uint8_t *)c->ptr);
+                break;
+            case CTYPE_UINT16:
+                printf("%s=%u\n", name, *(uint16_t *)c->ptr);
+                break;
+            case CTYPE_INT16:
+                printf("%s=%d\n", name, *(int16_t *)c->ptr);
+                break;
+            case CTYPE_INT16_ARRAY:
+                if (idx1 >= 0 && idx1 < c->tsize1) {
+                    printf("%s[%d]=%d\n", name, idx1, ((int16_t *)c->ptr)[idx1]);
+                }
+                break;
+            case CTYPE_UINT16_2D_ARRAY:
+                if (idx1 >= 0 && idx1 < c->tsize1 && idx2 >= 0 && idx2 < c->tsize2) {
+                    printf("%s[%d][%d]=%u\n", name, idx1, idx2, ((uint16_t *)c->ptr)[idx1*c->tsize1+idx2]);
+                }
+                break;
+            }
+            break;
+        }
+    }
+}
+
+/*
+  set a config variable
+ */
+void config_set(char *name, const char *value)
+{
+    int8_t idx1=-1, idx2=-1;
+    parse_array_name(name, &idx1, &idx2);
+    for (uint8_t i=0; i<CONFIG_TABLE_LEN; i++) {
+        const struct ctable *c = &config_table[i];
+        if (strcmp(name, c->name) == 0) {
+            switch (c->type) {
+            case CTYPE_UINT8:
+                *(uint8_t *)c->ptr = strtoul(value, NULL, 10);
+                break;
+            case CTYPE_UINT16:
+                *(uint16_t *)c->ptr = strtoul(value, NULL, 10);
+                break;
+            case CTYPE_INT16:
+                *(int16_t *)c->ptr = strtol(value, NULL, 10);
+                break;
+            case CTYPE_INT16_ARRAY:
+                if (idx1 >= 0 && idx1 < c->tsize1) {
+                    ((int16_t *)c->ptr)[idx1] = strtol(value, NULL, 10);
+                }
+                break;
+            case CTYPE_UINT16_2D_ARRAY:
+                if (idx1 >= 0 && idx1 < c->tsize1 && idx2 >= 0 && idx2 < c->tsize2) {
+                    ((uint16_t *)c->ptr)[idx1*c->tsize1+idx2] = strtoul(value, NULL, 10);
+                }
+                break;
+            }
+        }
+    }
 }

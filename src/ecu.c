@@ -6,6 +6,7 @@
 #include <util/delay.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 
 #include "config.h"
 #include "ecu.h"
@@ -16,6 +17,9 @@
 #include "bme280.h"
 #include "max6675.h"
 #include "log.h"
+
+// default period for telemetry, milliseconds
+static uint16_t telem_period_ms = 200U;
 
 #define CLAMP(v, min, max)\
   v = (v > max) ? max : ((v < min) ? min : v );
@@ -78,6 +82,81 @@ void default_state()
   status.pwm1_out = config.pwm1_min;
 }
 
+/*
+  set variable
+ */
+static void command_set(char *arg1, const char *arg2)
+{
+    printf("set %s %s\n", arg1, arg2);
+    if (!arg2) {
+        // with no 2nd arg show var
+        config_show(arg1);
+    } else {
+        config_set(arg1, arg2);
+    }
+}
+
+/*
+  change display period
+ */
+static void command_period(const char *arg)
+{
+    uint16_t new_period = strtoul(arg, NULL, 10);
+    if (new_period < 50 || new_period > 5000) {
+        printf("Invalid period %u\n", new_period);
+    } else {
+        telem_period_ms = new_period;
+    }
+}
+
+/*
+  process one line of input
+ */
+static void process_line(char *line)
+{
+    char *cmd = strtok(line, " ");
+    if (strcmp(cmd, "config") == 0) {
+        // show config
+        config_dump();
+    } else if (strcmp(cmd, "period") == 0) {
+        char *arg = strtok(NULL, " ");
+        if (arg) {
+            command_period(arg);
+        }
+    } else if (strcmp(cmd, "set") == 0) {
+        char *arg1 = strtok(NULL, " ");
+        char *arg2 = strtok(NULL, " ");
+        if (arg1) {
+            command_set(arg1, arg2);
+        }
+    }
+}
+
+/*
+  check for command input
+ */
+static void check_input(void)
+{
+    static char linebuf[32];
+    static uint8_t linelen;
+    int c;
+    while ((c = getchar()) != EOF) {
+        if (c == '\r' || c == '\n') {
+            c = 0;
+        }
+        linebuf[linelen++] = c;
+        if (c == 0) {
+            if (linelen > 1) {
+                process_line(linebuf);
+            }
+            linelen = 0;
+        }
+        if (linelen == sizeof(linebuf)) {
+            linelen = 0;
+        }
+    }
+}
+
 int main(void)
 {
   uart0_init();
@@ -136,10 +215,12 @@ int main(void)
 
     inj_map_update_row(status.throttle_out, status.pt_c);
 
+    check_input();
+
     // 1 second tasks
-    if ((ms - loop_ms) >= 200)
+    if ((ms - loop_ms) >= telem_period_ms)
     {
-      loop_ms += 200;
+      loop_ms += telem_period_ms;
 
       status.cht = interp_a_tab(config.a0cal, analogue(0));
       status.iat = interp_a_tab(config.a1cal, analogue(1));

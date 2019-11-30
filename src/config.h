@@ -55,5 +55,7 @@ void config_defaults();
 void config_load();
 void config_save();
 void config_dump();
+void config_show(char *name);
+void config_set(char *name, const char *value);
 
 #endif
