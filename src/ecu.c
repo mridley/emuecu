@@ -87,7 +87,6 @@ void default_state()
  */
 static void command_set(char *arg1, const char *arg2)
 {
-    printf("set %s %s\n", arg1, arg2);
     if (!arg2) {
         // with no 2nd arg show var
         config_show(arg1);
@@ -103,9 +102,10 @@ static void command_period(const char *arg)
 {
     uint16_t new_period = strtoul(arg, NULL, 10);
     if (new_period < 50 || new_period > 5000) {
-        printf("Invalid period %u\n", new_period);
+        logmsgf("Invalid period %u", new_period);
     } else {
         telem_period_ms = new_period;
+        logmsgf("new period %u", new_period);
     }
 }
 
@@ -115,9 +115,20 @@ static void command_period(const char *arg)
 static void process_line(char *line)
 {
     char *cmd = strtok(line, " ");
+    if (!cmd) {
+        return;
+    }
     if (strcmp(cmd, "config") == 0) {
-        // show config
-        config_dump();
+        char *arg = strtok(NULL, " ");
+        if (arg) {
+            if (strcmp(arg, "defaults") == 0) {
+                config_defaults();
+                logmsgf("config reset to defaults");
+            }
+        } else {
+            // show config
+            config_dump();
+        }
     } else if (strcmp(cmd, "period") == 0) {
         char *arg = strtok(NULL, " ");
         if (arg) {
