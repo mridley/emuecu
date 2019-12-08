@@ -103,12 +103,13 @@ enum config_type {
 };
 
 static const struct ctable {
-    const char *name;
+    const char name[14];
     enum config_type type;
     void *ptr;
     uint8_t tsize1, tsize2;
-} config_table[] = {
-    { "version", CTYPE_UINT8, &config.version },
+    bool read_only;
+} config_table[] PROGMEM = {
+    { "version", CTYPE_UINT8, &config.version, 0, 0, true },
     { "thr_min", CTYPE_UINT16, &config.thr_min },
     { "thr_start", CTYPE_UINT16, &config.thr_start },
     { "thr_max", CTYPE_UINT16, &config.thr_max },
@@ -174,7 +175,8 @@ void config_dump()
 
 /*
   parse array reference xxx[idx1][idx2]
-  if an array referene is found then name is truncated at the first [
+  if an array reference is found then name is truncated at the first [
+  NOTE: this modifies the input string
 */
 static void parse_array_name(char *name, int8_t *idx1, int8_t *idx2)
 {
@@ -206,35 +208,36 @@ void config_show(char *name)
     int8_t idx1=-1, idx2=-1;
     parse_array_name(name, &idx1, &idx2);
     for (uint8_t i=0; i<CONFIG_TABLE_LEN; i++) {
-        const struct ctable *c = &config_table[i];
-        if (strcmp(name, c->name) == 0) {
-            switch (c->type) {
+        struct ctable c;
+        memcpy_P(&c, &config_table[i], sizeof(c));
+        if (strcmp(name, c.name) == 0) {
+            switch (c.type) {
             case CTYPE_UINT8:
-                printf("%s=%u\n", name, *(uint8_t *)c->ptr);
+                printf("{\"var\":{\"%s\":%u}}\n", name, *(uint8_t *)c.ptr);
                 break;
             case CTYPE_UINT16:
-                printf("%s=%u\n", name, *(uint16_t *)c->ptr);
+                printf("{\"var\":{\"%s\":%u}}\n", name, *(uint16_t *)c.ptr);
                 break;
             case CTYPE_INT16:
-                printf("%s=%d\n", name, *(int16_t *)c->ptr);
+                printf("{\"var\":{\"%s\":%d}}\n", name, *(int16_t *)c.ptr);
                 break;
             case CTYPE_INT16_ARRAY:
                 if (idx1 == -1) {
-                    for (uint8_t i=0; i<c->tsize1; i++) {
-                        printf("%s[%d]=%d\n", name, i, ((int16_t *)c->ptr)[i]);
+                    for (uint8_t j=0; j<c.tsize1; j++) {
+                        printf("{\"var\":{\"%s[%u]\":%d}}\n", name, j, ((int16_t *)c.ptr)[j]);
                     }
-                } else if (idx1 >= 0 && idx1 < c->tsize1) {
-                    printf("%s[%d]=%d\n", name, idx1, ((int16_t *)c->ptr)[idx1]);
+                } else if (idx1 >= 0 && idx1 < c.tsize1) {
+                    printf("{\"var\":{\"%s[%u]\":%d}}\n", name, idx1, ((int16_t *)c.ptr)[idx1]);
                 }
                 break;
             case CTYPE_UINT16_2D_ARRAY:
-                if (idx1 >= 0 && idx1 < c->tsize1 && idx2 == -1) {
+                if (idx1 >= 0 && idx1 < c.tsize1 && idx2 == -1) {
                     // show row
-                    for (uint8_t i=0; i<c->tsize2; i++) {
-                        printf("%s[%d][%d]=%d\n", name, idx1, i, ((uint16_t *)c->ptr)[idx1*c->tsize1+i]);
+                    for (uint8_t j=0; j<c.tsize2; j++) {
+                        printf("{\"var\":{\"%s[%u][%u]\":%u}}\n", name, idx1, j, ((uint16_t *)c.ptr)[idx1*c.tsize1+j]);
                     }
-                } else if (idx1 >= 0 && idx1 < c->tsize1 && idx2 >= 0 && idx2 < c->tsize2) {
-                    printf("%s[%d][%d]=%u\n", name, idx1, idx2, ((uint16_t *)c->ptr)[idx1*c->tsize1+idx2]);
+                } else if (idx1 >= 0 && idx1 < c.tsize1 && idx2 >= 0 && idx2 < c.tsize2) {
+                    printf("{\"var\":{\"%s[%u][%u]\":%u}}\n", name, idx1, idx2, ((uint16_t *)c.ptr)[idx1*c.tsize1+idx2]);
                 }
                 break;
             }
@@ -251,26 +254,31 @@ void config_set(char *name, const char *value)
     int8_t idx1=-1, idx2=-1;
     parse_array_name(name, &idx1, &idx2);
     for (uint8_t i=0; i<CONFIG_TABLE_LEN; i++) {
-        const struct ctable *c = &config_table[i];
-        if (strcmp(name, c->name) == 0) {
-            switch (c->type) {
+        struct ctable c;
+        memcpy_P(&c, &config_table[i], sizeof(c));
+        if (strcmp(name, c.name) == 0) {
+            if (c.read_only) {
+                // don't allow set of read-only config values
+                return;
+            }
+            switch (c.type) {
             case CTYPE_UINT8:
-                *(uint8_t *)c->ptr = strtoul(value, NULL, 10);
+                *(uint8_t *)c.ptr = strtoul(value, NULL, 10);
                 break;
             case CTYPE_UINT16:
-                *(uint16_t *)c->ptr = strtoul(value, NULL, 10);
+                *(uint16_t *)c.ptr = strtoul(value, NULL, 10);
                 break;
             case CTYPE_INT16:
-                *(int16_t *)c->ptr = strtol(value, NULL, 10);
+                *(int16_t *)c.ptr = strtol(value, NULL, 10);
                 break;
             case CTYPE_INT16_ARRAY:
-                if (idx1 >= 0 && idx1 < c->tsize1) {
-                    ((int16_t *)c->ptr)[idx1] = strtol(value, NULL, 10);
+                if (idx1 >= 0 && idx1 < c.tsize1) {
+                    ((int16_t *)c.ptr)[idx1] = strtol(value, NULL, 10);
                 }
                 break;
             case CTYPE_UINT16_2D_ARRAY:
-                if (idx1 >= 0 && idx1 < c->tsize1 && idx2 >= 0 && idx2 < c->tsize2) {
-                    ((uint16_t *)c->ptr)[idx1*c->tsize1+idx2] = strtoul(value, NULL, 10);
+                if (idx1 >= 0 && idx1 < c.tsize1 && idx2 >= 0 && idx2 < c.tsize2) {
+                    ((uint16_t *)c.ptr)[idx1*c.tsize1+idx2] = strtoul(value, NULL, 10);
                 }
                 break;
             }
