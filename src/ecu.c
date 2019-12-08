@@ -20,7 +20,7 @@
 #define CLAMP(v, min, max)\
   v = (v > max) ? max : ((v < min) ? min : v );
 
-inline uint16_t clamp_pwm(uint16_t v, uint16_t pwm_min, uint16_t pwm_max)
+inline uint16_t clamp_pwm(int16_t v, uint16_t pwm_min, uint16_t pwm_max)
 {
   // for no input scenario
   if (v > PWM_LIMIT)
@@ -123,13 +123,17 @@ int main(void)
     }
     status.rpm = rpm();
     status.thr_in = pwm_input();
-    uint16_t thr_clamped = clamp_pwm(status.thr_in, config.thr_min, config.thr_max);
+    uint16_t thr_clamped = clamp_pwm((int16_t)status.thr_in, config.thr_min, config.thr_max);
     const float t_scale = 1.0f / (float)(config.thr_max - config.thr_min);
     status.throttle_in = (float)(thr_clamped - config.thr_min) * t_scale;
     status.throttle_out = throttle(run_time_ms);
 
-    status.pwm0_out = clamp_pwm(config.pwm0_min + (uint16_t)(status.throttle_out*(config.pwm0_max-config.pwm0_min)),
-                                config.pwm0_min, config.pwm0_max);
+    int16_t pwm0_out = (int16_t)config.pwm0_min + (int16_t)(status.throttle_out*((int16_t)config.pwm0_max-(int16_t)config.pwm0_min));
+    if (config.pwm0_min < config.pwm0_max) {
+      status.pwm0_out = clamp_pwm(pwm0_out, config.pwm0_min, config.pwm0_max);
+    } else {
+      status.pwm0_out = clamp_pwm(pwm0_out, config.pwm0_max, config.pwm0_min);
+    }
     set_pwm(0, status.pwm0_out);
 
     status.pt_c = inj_corrections(status.baro, status.iat, status.cht, run_time_ms);
