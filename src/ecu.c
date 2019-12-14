@@ -19,7 +19,7 @@
 #include "log.h"
 
 // default period for telemetry, milliseconds
-static uint16_t telem_period_ms = 200U;
+static uint16_t telem_period_ms = 2000U;
 
 #define CLAMP(v, min, max)\
   v = (v > max) ? max : ((v < min) ? min : v );
@@ -83,19 +83,6 @@ void default_state()
 }
 
 /*
-  set variable
- */
-static void command_set(char *arg1, const char *arg2)
-{
-    if (!arg2) {
-        // with no 2nd arg show var
-        config_show(arg1);
-    } else {
-        config_set(arg1, arg2);
-    }
-}
-
-/*
   change display period
  */
 static void command_period(const char *arg)
@@ -114,31 +101,40 @@ static void command_period(const char *arg)
  */
 static void process_line(char *line)
 {
-    char *cmd = strtok(line, " ");
+    const char *delim = " {:}";
+    char *cmd = strtok(line, delim);
     if (!cmd) {
         return;
     }
     if (strcmp(cmd, "config") == 0) {
-        char *arg = strtok(NULL, " ");
+        char *arg = strtok(NULL, delim);
         if (arg) {
             if (strcmp(arg, "defaults") == 0) {
                 config_defaults();
                 logmsgf("config reset to defaults");
+            } else if (strcmp(arg, "save") == 0) {
+                config_save();
+                logmsgf("config saved");
             }
         } else {
             // show config
             config_dump();
         }
     } else if (strcmp(cmd, "period") == 0) {
-        char *arg = strtok(NULL, " ");
+        char *arg = strtok(NULL, delim);
         if (arg) {
             command_period(arg);
         }
+    } else if (strcmp(cmd, "get") == 0) {
+        char *arg = strtok(NULL, delim);
+        if (arg) {
+            config_show(arg);
+        }
     } else if (strcmp(cmd, "set") == 0) {
-        char *arg1 = strtok(NULL, " ");
-        char *arg2 = strtok(NULL, " ");
-        if (arg1) {
-            command_set(arg1, arg2);
+        char *arg1 = strtok(NULL, delim);
+        char *arg2 = strtok(NULL, delim);
+        if (arg1 && arg2) {
+            config_set(arg1, arg2);
         }
     }
 }

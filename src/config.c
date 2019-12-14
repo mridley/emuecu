@@ -252,11 +252,16 @@ void config_show(char *name)
 void config_set(char *name, const char *value)
 {
     int8_t idx1=-1, idx2=-1;
-    parse_array_name(name, &idx1, &idx2);
+    char name0[32];
+    if (strlen(name) > sizeof(name0)-1) {
+        return;
+    }
+    strncpy(name0, name, sizeof(name0)-1);
+    parse_array_name(name0, &idx1, &idx2);
     for (uint8_t i=0; i<CONFIG_TABLE_LEN; i++) {
         struct ctable c;
         memcpy_P(&c, &config_table[i], sizeof(c));
-        if (strcmp(name, c.name) == 0) {
+        if (strcmp(name0, c.name) == 0) {
             if (c.read_only) {
                 // don't allow set of read-only config values
                 return;
@@ -264,21 +269,28 @@ void config_set(char *name, const char *value)
             switch (c.type) {
             case CTYPE_UINT8:
                 *(uint8_t *)c.ptr = strtoul(value, NULL, 10);
-                break;
+                config_show(name);
+                return;
             case CTYPE_UINT16:
                 *(uint16_t *)c.ptr = strtoul(value, NULL, 10);
-                break;
+                config_show(name);
+                return;
             case CTYPE_INT16:
                 *(int16_t *)c.ptr = strtol(value, NULL, 10);
-                break;
+                config_show(name);
+                return;
             case CTYPE_INT16_ARRAY:
                 if (idx1 >= 0 && idx1 < c.tsize1) {
                     ((int16_t *)c.ptr)[idx1] = strtol(value, NULL, 10);
+                    config_show(name);
+                    return;
                 }
                 break;
             case CTYPE_UINT16_2D_ARRAY:
                 if (idx1 >= 0 && idx1 < c.tsize1 && idx2 >= 0 && idx2 < c.tsize2) {
                     ((uint16_t *)c.ptr)[idx1*c.tsize1+idx2] = strtoul(value, NULL, 10);
+                    config_show(name);
+                    return;
                 }
                 break;
             }
