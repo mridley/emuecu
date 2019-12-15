@@ -166,21 +166,19 @@ static void check_input(void)
 
 int main(void)
 {
+  sei(); // Enable Global Interrupt
   uart0_init();
+  logmsgf("EMU ECU");
 
-  //config_load();
-  config_defaults();
-  config_save();
+  if (!config_load()) {
+    config_defaults();
+    config_save();
+  }
   config_dump();
-  //config_save();
 
   default_state();
   setup_timers(status.pwm0_out, status.pwm1_out);
-
   setup_inputs();
- 
-  sei(); // Enable Global Interrupt
-  logmsgf("EMU ECU");
 
   bme_read_calib_data();
   bme_start_conversion();

@@ -6,6 +6,7 @@
 #endif
 
 #include <stdint.h>
+#include <stdbool.h>
 #include "emu_types.h"
 
 #define PWM_LIMIT      (2500)
@@ -52,7 +53,7 @@ typedef struct _config
 extern emuconfig_t config;
 
 void config_defaults();
-void config_load();
+bool config_load();
 void config_save();
 void config_dump();
 void config_show(char *name);

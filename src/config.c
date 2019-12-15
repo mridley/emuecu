@@ -11,8 +11,8 @@
 #define THR_MIN       (1000)
 #define THR_START     (1070)
 #define THR_MAX       (2000)
-#define PWM0_MIN      (1000)
-#define PWM0_MAX      (2080)
+#define PWM0_MIN      (1980)
+#define PWM0_MAX      (1171)
 #define PWM1_MIN      (1000)
 #define PWM1_MAX      (2000)
 
@@ -76,14 +76,21 @@ uint16_t calc_chksum(const void* const data, size_t n)
   return chksum;
 }
 
-void config_load()
+bool config_load()
 {
   eeprom_read_block(&config, CONFIG_EE_ADDR, sizeof(emuconfig_t));
-  uint16_t checksum = calc_chksum(&config, sizeof(config) - sizeof(config.checksum));
-  if (checksum != config.checksum) {
-    logmsgf("invalid config: using defaults");
-    config_defaults();
+  if (config.version != CONFIG_VERSION) {
+    logmsgf("wrong config version");
+    return false;
   }
+
+  const uint16_t checksum = calc_chksum(&config, sizeof(config) - sizeof(config.checksum));
+  if (checksum != config.checksum) {
+    logmsgf("bad config checksum");
+    return false;
+  }
+  logmsgf("config loaded ok");
+  return true;
 }
 
 void config_save()
