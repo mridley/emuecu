@@ -66,7 +66,7 @@ F 1 "1N5365B" H 9250 3750 40  0000 C CNN
 F 2 "D5" H 9250 3850 60  0000 C CNN
 F 3 "~" H 9250 3850 60  0000 C CNN
 	1    9250 3850
-	1    0    0    -1  
+	-1   0    0    1   
 $EndComp
 $Comp
 L Connector_Generic:Conn_01x02 P1
@@ -209,7 +209,7 @@ F 1 "1N4733" H 9450 1500 40  0000 C CNN
 F 2 "DO-41" H 9450 1600 60  0000 C CNN
 F 3 "~" H 9450 1600 60  0000 C CNN
 	1    9450 1600
-	0    -1   -1   0   
+	0    1    1    0   
 $EndComp
 $Comp
 L Device:D_Zener Z5
@@ -220,7 +220,7 @@ F 1 "1N4733" H 9450 750 40  0000 C CNN
 F 2 "DO-41" H 9450 850 60  0000 C CNN
 F 3 "~" H 9450 850 60  0000 C CNN
 	1    9450 850 
-	0    -1   -1   0   
+	0    1    1    0   
 $EndComp
 $Comp
 L power:PWR_FLAG #FLG07
@@ -264,7 +264,7 @@ F 1 "1N5822" H 5950 900 40  0000 C CNN
 F 2 "D6" H 5950 1000 60  0000 C CNN
 F 3 "~" H 5950 1000 60  0000 C CNN
 	1    5950 1000
-	1    0    0    -1  
+	-1   0    0    1   
 $EndComp
 Text Notes 4250 8100 0    60   ~ 0
 This work is licensed under a Creative Commons\nAttribution-ShareAlike 4.0 International License.\n\nhttp://creativecommons.org/licenses/by-sa/4.0/\n
@@ -288,7 +288,7 @@ F 1 "1N4002" H 2700 1200 40  0000 C CNN
 F 2 "DO-41" H 2700 1300 60  0000 C CNN
 F 3 "~" H 2700 1300 60  0000 C CNN
 	1    2700 1300
-	-1   0    0    1   
+	1    0    0    -1  
 $EndComp
 $Comp
 L Device:D D6
@@ -299,7 +299,7 @@ F 1 "BAT48" H 2650 2850 40  0000 C CNN
 F 2 "DO-35" H 2650 2950 60  0000 C CNN
 F 3 "~" H 2650 2950 60  0000 C CNN
 	1    2650 2950
-	0    -1   -1   0   
+	0    1    1    0   
 $EndComp
 $Comp
 L Device:D D5
@@ -310,18 +310,7 @@ F 1 "BAT48" H 2650 2450 40  0000 C CNN
 F 2 "DO-35" H 2650 2550 60  0000 C CNN
 F 3 "~" H 2650 2550 60  0000 C CNN
 	1    2650 2550
-	0    -1   -1   0   
-$EndComp
-$Comp
-L Device:D D8
-U 1 1 562AF41C
-P 2650 5750
-F 0 "D8" H 2650 5850 40  0000 C CNN
-F 1 "BAT48" H 2650 5650 40  0000 C CNN
-F 2 "DO-35" H 2650 5750 60  0000 C CNN
-F 3 "~" H 2650 5750 60  0000 C CNN
-	1    2650 5750
-	0    -1   -1   0   
+	0    1    1    0   
 $EndComp
 $Comp
 L Device:D D7
@@ -332,7 +321,7 @@ F 1 "BAT48" H 2650 5250 40  0000 C CNN
 F 2 "DO-35" H 2650 5350 60  0000 C CNN
 F 3 "~" H 2650 5350 60  0000 C CNN
 	1    2650 5350
-	0    -1   -1   0   
+	0    1    1    0   
 $EndComp
 $Comp
 L Device:D D10
@@ -343,7 +332,7 @@ F 1 "BAT48" H 2050 7050 40  0000 C CNN
 F 2 "DO-35" H 2050 7150 60  0000 C CNN
 F 3 "~" H 2050 7150 60  0000 C CNN
 	1    2050 7150
-	0    -1   -1   0   
+	0    1    1    0   
 $EndComp
 $Comp
 L Device:D D9
@@ -354,7 +343,7 @@ F 1 "BAT48" H 2050 6550 40  0000 C CNN
 F 2 "DO-35" H 2050 6650 60  0000 C CNN
 F 3 "~" H 2050 6650 60  0000 C CNN
 	1    2050 6650
-	0    -1   -1   0   
+	0    1    1    0   
 $EndComp
 $Comp
 L power:+5C #PWR09
@@ -467,17 +456,6 @@ F 3 "~" H 8700 6500 60  0000 C CNN
 	1    0    0    -1  
 $EndComp
 $Comp
-L Device:D_Zener Z3
-U 1 1 562C5BE7
-P 9350 4550
-F 0 "Z3" H 9350 4650 50  0000 C CNN
-F 1 "1N4733" H 9350 4450 40  0000 C CNN
-F 2 "DO-41" H 9350 4550 60  0000 C CNN
-F 3 "~" H 9350 4550 60  0000 C CNN
-	1    9350 4550
-	-1   0    0    1   
-$EndComp
-$Comp
 L power:PWR_FLAG #FLG017
 U 1 1 562C7A07
 P 1050 1300
@@ -530,17 +508,6 @@ F 1 "FR304" H 9250 5100 40  0000 C CNN
 F 2 "D6" H 9250 5200 60  0000 C CNN
 F 3 "~" H 9250 5200 60  0000 C CNN
 	1    9250 5200
-	-1   0    0    1   
-$EndComp
-$Comp
-L Device:D_Zener Z4
-U 1 1 56309628
-P 9350 5900
-F 0 "Z4" H 9350 6000 50  0000 C CNN
-F 1 "1N4733" H 9350 5800 40  0000 C CNN
-F 2 "DO-41" H 9350 5900 60  0000 C CNN
-F 3 "~" H 9350 5900 60  0000 C CNN
-	1    9350 5900
 	-1   0    0    1   
 $EndComp
 $Comp
@@ -904,7 +871,7 @@ F 1 "BAT48" H 2650 4200 40  0000 C CNN
 F 2 "DO-35" H 2650 4300 60  0000 C CNN
 F 3 "~" H 2650 4300 60  0000 C CNN
 	1    2650 4300
-	0    -1   -1   0   
+	0    1    1    0   
 $EndComp
 $Comp
 L Device:D D11
@@ -915,7 +882,7 @@ F 1 "BAT48" H 2650 3750 40  0000 C CNN
 F 2 "DO-35" H 2650 3850 60  0000 C CNN
 F 3 "~" H 2650 3850 60  0000 C CNN
 	1    2650 3850
-	0    -1   -1   0   
+	0    1    1    0   
 $EndComp
 $Comp
 L power:+5C #PWR024
@@ -992,7 +959,7 @@ F 1 "1N4733" H 9450 2250 40  0000 C CNN
 F 2 "DO-41" H 9450 2350 60  0000 C CNN
 F 3 "~" H 9450 2350 60  0000 C CNN
 	1    9450 2350
-	0    -1   -1   0   
+	0    1    1    0   
 $EndComp
 $Comp
 L decent:R R25
@@ -1014,28 +981,6 @@ F 1 "470" V 9700 2150 40  0000 C CNN
 F 2 "R4" V 9700 2300 30  0000 C CNN
 F 3 "~" H 9750 2150 30  0000 C CNN
 	1    9750 2150
-	0    -1   -1   0   
-$EndComp
-$Comp
-L Device:D_Zener Z8
-U 1 1 56447093
-P 5600 5900
-F 0 "Z8" H 5600 6000 50  0000 C CNN
-F 1 "1N4733" H 5600 5800 40  0000 C CNN
-F 2 "DO-41" H 5600 5900 60  0000 C CNN
-F 3 "~" H 5600 5900 60  0000 C CNN
-	1    5600 5900
-	0    -1   -1   0   
-$EndComp
-$Comp
-L Device:D_Zener Z9
-U 1 1 564470A9
-P 5600 6500
-F 0 "Z9" H 5600 6600 50  0000 C CNN
-F 1 "1N4733" H 5600 6400 40  0000 C CNN
-F 2 "DO-41" H 5600 6500 60  0000 C CNN
-F 3 "~" H 5600 6500 60  0000 C CNN
-	1    5600 6500
 	0    -1   -1   0   
 $EndComp
 $Comp
@@ -1651,8 +1596,6 @@ Wire Wire Line
 Wire Wire Line
 	6450 6850 5100 6850
 Wire Wire Line
-	3800 7250 5000 7250
-Wire Wire Line
 	6550 7250 5400 7250
 $Comp
 L 74xGxx:74AHC1G14 U2
@@ -1724,8 +1667,6 @@ F 3 "" H 3550 6850 60  0000 C CNN
 	1    3550 6850
 	1    0    0    -1  
 $EndComp
-Wire Wire Line
-	3550 6850 3550 7150
 Wire Wire Line
 	4100 5900 4100 6100
 $Comp
@@ -2059,7 +2000,7 @@ F 1 "IN5919BG (5.6V)" H 1900 1500 40  0000 C CNN
 F 2 "DO-41" H 1900 1600 60  0000 C CNN
 F 3 "~" H 1900 1600 60  0000 C CNN
 	1    1900 1600
-	0    -1   -1   0   
+	0    1    1    0   
 $EndComp
 Wire Wire Line
 	10000 6400 10200 6400
@@ -2292,4 +2233,63 @@ $EndComp
 NoConn ~ 4250 3850
 NoConn ~ 4250 5050
 NoConn ~ 4250 4950
+$Comp
+L Device:D_Zener Z3
+U 1 1 562C5BE7
+P 9350 4550
+F 0 "Z3" H 9350 4650 50  0000 C CNN
+F 1 "1N4733" H 9350 4450 40  0000 C CNN
+F 2 "DO-41" H 9350 4550 60  0000 C CNN
+F 3 "~" H 9350 4550 60  0000 C CNN
+	1    9350 4550
+	1    0    0    -1  
+$EndComp
+$Comp
+L Device:D_Zener Z4
+U 1 1 56309628
+P 9350 5900
+F 0 "Z4" H 9350 6000 50  0000 C CNN
+F 1 "1N4733" H 9350 5800 40  0000 C CNN
+F 2 "DO-41" H 9350 5900 60  0000 C CNN
+F 3 "~" H 9350 5900 60  0000 C CNN
+	1    9350 5900
+	1    0    0    -1  
+$EndComp
+$Comp
+L Device:D_Zener Z9
+U 1 1 564470A9
+P 5600 6500
+F 0 "Z9" H 5600 6600 50  0000 C CNN
+F 1 "1N4733" H 5600 6400 40  0000 C CNN
+F 2 "DO-41" H 5600 6500 60  0000 C CNN
+F 3 "~" H 5600 6500 60  0000 C CNN
+	1    5600 6500
+	0    1    1    0   
+$EndComp
+$Comp
+L Device:D_Zener Z8
+U 1 1 56447093
+P 5600 5900
+F 0 "Z8" H 5600 6000 50  0000 C CNN
+F 1 "1N4733" H 5600 5800 40  0000 C CNN
+F 2 "DO-41" H 5600 5900 60  0000 C CNN
+F 3 "~" H 5600 5900 60  0000 C CNN
+	1    5600 5900
+	0    1    1    0   
+$EndComp
+Wire Wire Line
+	3800 7250 5000 7250
+Wire Wire Line
+	3550 6850 3550 7150
+$Comp
+L Device:D D8
+U 1 1 562AF41C
+P 2650 5750
+F 0 "D8" H 2650 5850 40  0000 C CNN
+F 1 "BAT48" H 2650 5650 40  0000 C CNN
+F 2 "DO-35" H 2650 5750 60  0000 C CNN
+F 3 "~" H 2650 5750 60  0000 C CNN
+	1    2650 5750
+	0    1    1    0   
+$EndComp
 $EndSCHEMATC
