@@ -6,6 +6,7 @@
 #include <util/delay.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 
 #include "config.h"
 #include "ecu.h"
@@ -16,6 +17,9 @@
 #include "bme280.h"
 #include "max6675.h"
 #include "log.h"
+
+// default period for telemetry, milliseconds
+static uint16_t telem_period_ms = 2000U;
 
 #define CLAMP(v, min, max)\
   v = (v > max) ? max : ((v < min) ? min : v );
@@ -76,6 +80,88 @@ void default_state()
   status.baro = BARO_MSLP_PA;
   status.pwm0_out = config.pwm0_min;
   status.pwm1_out = config.pwm1_min;
+}
+
+/*
+  change display period
+ */
+static void command_period(const char *arg)
+{
+    uint16_t new_period = strtoul(arg, NULL, 10);
+    if (new_period < 50 || new_period > 5000) {
+        logmsgf("Invalid period %u", new_period);
+    } else {
+        telem_period_ms = new_period;
+        logmsgf("new period %u", new_period);
+    }
+}
+
+/*
+  process one line of input
+ */
+static void process_line(char *line)
+{
+    const char *delim = " {:}";
+    char *cmd = strtok(line, delim);
+    if (!cmd) {
+        return;
+    }
+    if (strcmp(cmd, "config") == 0) {
+        char *arg = strtok(NULL, delim);
+        if (arg) {
+            if (strcmp(arg, "defaults") == 0) {
+                config_defaults();
+                logmsgf("config reset to defaults");
+            } else if (strcmp(arg, "save") == 0) {
+                config_save();
+                logmsgf("config saved");
+            }
+        } else {
+            // show config
+            config_dump();
+        }
+    } else if (strcmp(cmd, "period") == 0) {
+        char *arg = strtok(NULL, delim);
+        if (arg) {
+            command_period(arg);
+        }
+    } else if (strcmp(cmd, "get") == 0) {
+        char *arg = strtok(NULL, delim);
+        if (arg) {
+            config_show(arg);
+        }
+    } else if (strcmp(cmd, "set") == 0) {
+        char *arg1 = strtok(NULL, delim);
+        char *arg2 = strtok(NULL, delim);
+        if (arg1 && arg2) {
+            config_set(arg1, arg2);
+        }
+    }
+}
+
+/*
+  check for command input
+ */
+static void check_input(void)
+{
+    static char linebuf[32];
+    static uint8_t linelen;
+    int c;
+    while ((c = getchar()) != EOF) {
+        if (c == '\r' || c == '\n') {
+            c = 0;
+        }
+        linebuf[linelen++] = c;
+        if (c == 0) {
+            if (linelen > 1) {
+                process_line(linebuf);
+            }
+            linelen = 0;
+        }
+        if (linelen == sizeof(linebuf)) {
+            linelen = 0;
+        }
+    }
 }
 
 int main(void)
@@ -140,10 +226,12 @@ int main(void)
 
     inj_map_update_row(status.throttle_out, status.pt_c);
 
+    check_input();
+
     // 1 second tasks
-    if ((ms - loop_ms) >= 200)
+    if ((ms - loop_ms) >= telem_period_ms)
     {
-      loop_ms += 200;
+      loop_ms += telem_period_ms;
 
       status.cht = interp_a_tab(config.a0cal, analogue(0));
       status.iat = interp_a_tab(config.a1cal, analogue(1));
