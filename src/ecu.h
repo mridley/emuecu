@@ -36,6 +36,7 @@ typedef struct _ecu_status
   uint16_t thr_in;
   uint16_t pwm0_out;
   uint16_t pwm1_out;
+  int16_t throttle_override;
 } emustatus_t;
 
 #endif

@@ -6,6 +6,9 @@
 #include "config.h"
 #include "injection.h"
 #include "log.h"
+#include "ecu.h"
+
+extern emustatus_t status;
 
 // defaults
 #define THR_MIN       (1000)
@@ -138,6 +141,7 @@ static const struct ctable {
     { "a1cal", CTYPE_INT16_ARRAY, &config.a1cal[0], ARRAY_LEN(config.a1cal) },
     { "ign_adv", CTYPE_INT16_ARRAY, &config.ign_adv[0], ARRAY_LEN(config.ign_adv) },
     { "inj_map", CTYPE_UINT16_2D_ARRAY, &config.inj_map[0][0], ARRAY_LEN(config.inj_map), ARRAY_LEN(config.inj_map[0]) },
+    { "thr_over", CTYPE_INT16, &status.throttle_override },
 };
 
 #define CONFIG_TABLE_LEN ARRAY_LEN(config_table)
