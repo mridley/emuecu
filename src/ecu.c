@@ -19,7 +19,7 @@
 #include "log.h"
 
 // default period for telemetry, milliseconds
-static uint16_t telem_period_ms = 2000U;
+static uint16_t telem_period_ms = 200U;
 
 #define CLAMP(v, min, max)\
   v = (v > max) ? max : ((v < min) ? min : v );
