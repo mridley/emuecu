@@ -80,6 +80,7 @@ void default_state()
   status.baro = BARO_MSLP_PA;
   status.pwm0_out = config.pwm0_min;
   status.pwm1_out = config.pwm1_min;
+  status.throttle_override = -1;
 }
 
 /*
@@ -164,6 +165,14 @@ static void check_input(void)
     }
 }
 
+static uint16_t get_throttle_in()
+{
+    if (status.throttle_override >= 0) {
+        return status.throttle_override;
+    }
+    return pwm_input();
+}
+
 int main(void)
 {
   sei(); // Enable Global Interrupt
@@ -206,7 +215,7 @@ int main(void)
       run_time_ms = (ms - status.engine_start_ms);
     }
     status.rpm = rpm();
-    status.thr_in = pwm_input();
+    status.thr_in = get_throttle_in();
     uint16_t thr_clamped = clamp_pwm((int16_t)status.thr_in, config.thr_min, config.thr_max);
     const float t_scale = 1.0f / (float)(config.thr_max - config.thr_min);
     status.throttle_in = (float)(thr_clamped - config.thr_min) * t_scale;
