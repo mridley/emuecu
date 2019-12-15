@@ -232,10 +232,11 @@ int main(void)
     status.pt_c = inj_corrections(status.baro, status.iat, status.cht, run_time_ms);
 
     inj_map_update_row(status.throttle_out, status.pt_c);
+    status.inj_ticks = inj_ticks_(status.rpm);
 
     check_input();
 
-    // 1 second tasks
+    // lower frequency tasks
     if ((ms - loop_ms) >= telem_period_ms)
     {
       loop_ms += telem_period_ms;
@@ -264,7 +265,7 @@ int main(void)
       printf("{\"status\":{\"pt_c\":%f,\"starts\":%u}}\n",
              status.pt_c, status.starts);
       printf("{\"status\":{\"pwm0_out\":%d,\"pwm1_out\":%d,\"inj_ticks\":%u}}\n",
-             status.pwm0_out, status.pwm1_out, inj_ticks_(rpm()));
+             status.pwm0_out, status.pwm1_out, status.inj_ticks);
 
       // start next conversion
       bme_start_conversion();
