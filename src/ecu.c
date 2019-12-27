@@ -277,7 +277,9 @@ int main(void)
     switch (status.state)
     {
     case INIT:
-      if (status.pt_c > 0.0) {
+      if ((status.pt_c > 0.0) &&
+          (status.thr_in > 0) &&
+          (status.thr_in < config.thr_start)) {
         status.engine_prime_ms = ticks_ms();
         pump_enable();
         logmsgf("engine prime");

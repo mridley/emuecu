@@ -26,7 +26,7 @@ void inj_map_default(void)
     for (uint8_t i = 0; i < MAP_COLS; i++)
     {
       // guess volumetric efficiency at low rpm, ve nom at mid rpm
-      float ve = VE_NOM + (VE_MAX - VE_NOM)*(float)((int8_t)(MAP_COLS - 1)/2 - i)/(float)((MAP_COLS - 1)/2U);
+      float ve = VE_NOM + (VE_MAX - VE_NOM)*(float)((MAP_COLS - 1)/2 - i)/(float)((MAP_COLS - 1)/2U);
 
       int16_t inj_time_us = (int16_t)(FUDGE_MULT * full_inj_time_us * throttle * ve) + FUDGE_ADD;
       if (inj_time_us < 0) {

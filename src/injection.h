@@ -21,7 +21,7 @@
 #define ZEROC_KELVIN (27315UL)
 
 // Volumetric efficiency (nominal)
-#define VE_NOM (0.5f)
+#define VE_NOM (0.75f)
 // Volumetric efficiency (max at low rpm ?)
 #define VE_MAX (1.0f)
 
