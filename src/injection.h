@@ -39,7 +39,6 @@
 // enrichment per deg
 #define CHT_ENRICH_RATE (0.005f)
 #define CHT_ENRICH_MAXFACTOR (1.5f)
-#define START_ENRICH_FACTOR (2.5f)
 
 #define US2TICKS(a)    ((a) >> 4)
 #define TICKS2US(a)    ((a) << 4)

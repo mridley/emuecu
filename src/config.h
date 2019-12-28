@@ -11,7 +11,7 @@
 
 #define PWM_LIMIT      (2500)
 #define RPM_LIMIT      (15000)
-#define CONFIG_VERSION (1)
+#define CONFIG_VERSION (4)
 
 #define MAP_ROWS       (10)
 #define MAP_COLS       (10)
@@ -19,12 +19,18 @@
 #define A_TAB_IDX_BITS (4)
 #define A_TAB_SIZE     ((1<<A_TAB_IDX_BITS) + 1)
 
+enum throttle_source {
+    THROTTLE_SOURCE_PWM = 0,
+    THROTTLE_SOURCE_JSON = 1,
+};
+
 typedef struct _config
 {
   uint8_t  version;   // int
   uint16_t thr_min;   // us thr input for 0%
   uint16_t thr_start; // us thr input for start
   uint16_t thr_max;   // us thr input for 100%
+  uint8_t  thr_src;   // soft vs pwm throttle
   uint16_t pwm0_min;  // us throttle
   uint16_t pwm0_max;  // us
   uint16_t pwm1_min;  // us starter?
@@ -46,6 +52,9 @@ typedef struct _config
   int16_t  a1cal[A_TAB_SIZE]; // 100*degrees
   inj_ticks_t inj_map[MAP_ROWS][MAP_COLS];   // [throttle  ][rpm] ticks (16us)
   int16_t  ign_adv[MAP_COLS]; // TODO
+  float    start_enrich_factor;
+  float    injector_mult;
+  float    injector_add;
 
   uint16_t checksum;
 } emuconfig_t;

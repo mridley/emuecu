@@ -64,9 +64,9 @@ float inj_corrections(uint32_t baro, int16_t iat, int16_t cht, uint16_t run_time
     pt_c *= cht_c;
   }
   if (run_time_ms < config.dwell_time_ms) {
-    pt_c *= START_ENRICH_FACTOR;
+    pt_c *= config.start_enrich_factor;
   } else if (run_time_ms < 2*config.dwell_time_ms) {
-    pt_c *= START_ENRICH_FACTOR *((float)(2*config.dwell_time_ms-run_time_ms)/(float)config.dwell_time_ms);
+    pt_c *= config.start_enrich_factor *((float)(2*config.dwell_time_ms-run_time_ms)/(float)config.dwell_time_ms);
   }
   return pt_c;
 }
@@ -83,6 +83,7 @@ void inj_map_update_row(float throttle, float pt_c)
   for (uint8_t i = 0U; i < MAP_COLS; ++i)
   {
     float v_uc = (float)config.inj_map[row][i] + wgt * (config.inj_map[row + 1][i] - config.inj_map[row][i]);
+    v_uc = (v_uc * config.injector_mult) + config.injector_add;
     float val = (v_uc*pt_c);
 
     if (val < 0.0f) {

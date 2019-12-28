@@ -7,12 +7,13 @@
 #include "injection.h"
 #include "log.h"
 #include "ecu.h"
+#include "timers.h"
 
 extern emustatus_t status;
 
 // defaults
 #define THR_MIN       (1000)
-#define THR_START     (1070)
+#define THR_START     (1200)
 #define THR_MAX       (2000)
 #define PWM0_MIN      (1980)
 #define PWM0_MAX      (1171)
@@ -20,7 +21,7 @@ extern emustatus_t status;
 #define PWM1_MAX      (2000)
 
 #define DWELL_TIME_MS (2000)
-#define START_TIME_MS (1000)
+#define START_TIME_MS (2000)
 #define IDLE_RPM      (1200)
 
 #define CONFIG_EE_ADDR (0)
@@ -60,12 +61,16 @@ void config_defaults()
   config.inj_open = 900;
   config.inj_close = 650;
   config.inj_flow = 38;
+  config.thr_src = THROTTLE_SOURCE_JSON;
 
   memcpy_P(config.a0cal, atab0, sizeof(config.a0cal));
   memcpy_P(config.a1cal, atab1, sizeof(config.a1cal));
   inj_map_default();
   memset(config.ign_adv, 0, sizeof(config.ign_adv));
   config.checksum = 0;
+  config.start_enrich_factor = 1.5;
+  config.injector_mult = 1.0;
+  config.injector_add = 0.0;
 }
 
 uint16_t calc_chksum(const void* const data, size_t n)
@@ -110,6 +115,7 @@ enum config_type {
     CTYPE_INT16,
     CTYPE_INT16_ARRAY,
     CTYPE_UINT16_2D_ARRAY,
+    CTYPE_FLOAT,
 };
 
 static const struct ctable {
@@ -123,6 +129,7 @@ static const struct ctable {
     { "thr_min", CTYPE_UINT16, &config.thr_min },
     { "thr_start", CTYPE_UINT16, &config.thr_start },
     { "thr_max", CTYPE_UINT16, &config.thr_max },
+    { "thr_src", CTYPE_UINT8, &config.thr_src },
     { "pwm0_min", CTYPE_UINT16, &config.pwm0_min },
     { "pwm0_max", CTYPE_UINT16, &config.pwm0_max },
     { "pwm1_min", CTYPE_UINT16, &config.pwm1_min },
@@ -141,7 +148,10 @@ static const struct ctable {
     { "a1cal", CTYPE_INT16_ARRAY, &config.a1cal[0], ARRAY_LEN(config.a1cal) },
     { "ign_adv", CTYPE_INT16_ARRAY, &config.ign_adv[0], ARRAY_LEN(config.ign_adv) },
     { "inj_map", CTYPE_UINT16_2D_ARRAY, &config.inj_map[0][0], ARRAY_LEN(config.inj_map), ARRAY_LEN(config.inj_map[0]) },
-    { "thr_over", CTYPE_INT16, &status.throttle_override },
+    { "thr_over", CTYPE_UINT16, &status.throttle_override },
+    { "start_ef", CTYPE_FLOAT, &config.start_enrich_factor },
+    { "inj_mult", CTYPE_FLOAT, &config.injector_mult },
+    { "inj_add", CTYPE_FLOAT, &config.injector_add },
 };
 
 #define CONFIG_TABLE_LEN ARRAY_LEN(config_table)
@@ -251,6 +261,9 @@ void config_show(char *name)
                     printf("{\"var\":{\"%s[%u][%u]\":%u}}\n", name, idx1, idx2, ((uint16_t *)c.ptr)[idx1*c.tsize1+idx2]);
                 }
                 break;
+            case CTYPE_FLOAT:
+                printf("{\"var\":{\"%s\":%.3f}}\n", name, *(float *)c.ptr);
+                break;
             }
             break;
         }
@@ -284,7 +297,12 @@ void config_set(char *name, const char *value)
                 return;
             case CTYPE_UINT16:
                 *(uint16_t *)c.ptr = strtoul(value, NULL, 10);
-                config_show(name);
+                if (c.ptr == (void *)&status.throttle_override) {
+                    // special handling for throttle override. Note time, and don't show
+                    status.throttle_set_ms = ticks_ms();
+                } else {
+                    config_show(name);
+                }
                 return;
             case CTYPE_INT16:
                 *(int16_t *)c.ptr = strtol(value, NULL, 10);
@@ -304,6 +322,10 @@ void config_set(char *name, const char *value)
                     return;
                 }
                 break;
+            case CTYPE_FLOAT:
+                *(float *)c.ptr = atof(value);
+                config_show(name);
+                return;
             }
         }
     }
