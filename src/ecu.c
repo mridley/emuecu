@@ -53,6 +53,7 @@ void engine_crank(bool crank)
 
 void engine_stop()
 {
+  status.starts = 0;
   status.engine_stop_ms = ticks_ms();
   ignition_disable();
   pump_disable();
@@ -181,6 +182,7 @@ static uint16_t get_throttle_in()
     }
     if (ret < 1000 && status.state != INIT) {
         status.state = INIT;
+        engine_stop();
         logmsgf("engine re-init");
     }
     return ret;

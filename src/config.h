@@ -11,7 +11,7 @@
 
 #define PWM_LIMIT      (2500)
 #define RPM_LIMIT      (15000)
-#define CONFIG_VERSION (2)
+#define CONFIG_VERSION (4)
 
 #define MAP_ROWS       (10)
 #define MAP_COLS       (10)
@@ -52,6 +52,9 @@ typedef struct _config
   int16_t  a1cal[A_TAB_SIZE]; // 100*degrees
   inj_ticks_t inj_map[MAP_ROWS][MAP_COLS];   // [throttle  ][rpm] ticks (16us)
   int16_t  ign_adv[MAP_COLS]; // TODO
+  float    start_enrich_factor;
+  float    injector_mult;
+  float    injector_add;
 
   uint16_t checksum;
 } emuconfig_t;

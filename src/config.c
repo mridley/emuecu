@@ -13,7 +13,7 @@ extern emustatus_t status;
 
 // defaults
 #define THR_MIN       (1000)
-#define THR_START     (1070)
+#define THR_START     (1200)
 #define THR_MAX       (2000)
 #define PWM0_MIN      (1980)
 #define PWM0_MAX      (1171)
@@ -21,7 +21,7 @@ extern emustatus_t status;
 #define PWM1_MAX      (2000)
 
 #define DWELL_TIME_MS (2000)
-#define START_TIME_MS (1000)
+#define START_TIME_MS (2000)
 #define IDLE_RPM      (1200)
 
 #define CONFIG_EE_ADDR (0)
@@ -68,6 +68,9 @@ void config_defaults()
   inj_map_default();
   memset(config.ign_adv, 0, sizeof(config.ign_adv));
   config.checksum = 0;
+  config.start_enrich_factor = 1.5;
+  config.injector_mult = 1.0;
+  config.injector_add = 0.0;
 }
 
 uint16_t calc_chksum(const void* const data, size_t n)
@@ -112,6 +115,7 @@ enum config_type {
     CTYPE_INT16,
     CTYPE_INT16_ARRAY,
     CTYPE_UINT16_2D_ARRAY,
+    CTYPE_FLOAT,
 };
 
 static const struct ctable {
@@ -145,6 +149,9 @@ static const struct ctable {
     { "ign_adv", CTYPE_INT16_ARRAY, &config.ign_adv[0], ARRAY_LEN(config.ign_adv) },
     { "inj_map", CTYPE_UINT16_2D_ARRAY, &config.inj_map[0][0], ARRAY_LEN(config.inj_map), ARRAY_LEN(config.inj_map[0]) },
     { "thr_over", CTYPE_UINT16, &status.throttle_override },
+    { "start_ef", CTYPE_FLOAT, &config.start_enrich_factor },
+    { "inj_mult", CTYPE_FLOAT, &config.injector_mult },
+    { "inj_add", CTYPE_FLOAT, &config.injector_add },
 };
 
 #define CONFIG_TABLE_LEN ARRAY_LEN(config_table)
@@ -254,6 +261,9 @@ void config_show(char *name)
                     printf("{\"var\":{\"%s[%u][%u]\":%u}}\n", name, idx1, idx2, ((uint16_t *)c.ptr)[idx1*c.tsize1+idx2]);
                 }
                 break;
+            case CTYPE_FLOAT:
+                printf("{\"var\":{\"%s\":%.3f}}\n", name, *(float *)c.ptr);
+                break;
             }
             break;
         }
@@ -312,6 +322,10 @@ void config_set(char *name, const char *value)
                     return;
                 }
                 break;
+            case CTYPE_FLOAT:
+                *(float *)c.ptr = atof(value);
+                config_show(name);
+                return;
             }
         }
     }
