@@ -11,7 +11,7 @@
 
 #define PWM_LIMIT      (2500)
 #define RPM_LIMIT      (15000)
-#define CONFIG_VERSION (1)
+#define CONFIG_VERSION (2)
 
 #define MAP_ROWS       (10)
 #define MAP_COLS       (10)
@@ -19,12 +19,18 @@
 #define A_TAB_IDX_BITS (4)
 #define A_TAB_SIZE     ((1<<A_TAB_IDX_BITS) + 1)
 
+enum throttle_source {
+    THROTTLE_SOURCE_PWM = 0,
+    THROTTLE_SOURCE_JSON = 1,
+};
+
 typedef struct _config
 {
   uint8_t  version;   // int
   uint16_t thr_min;   // us thr input for 0%
   uint16_t thr_start; // us thr input for start
   uint16_t thr_max;   // us thr input for 100%
+  uint8_t  thr_src;   // soft vs pwm throttle
   uint16_t pwm0_min;  // us throttle
   uint16_t pwm0_max;  // us
   uint16_t pwm1_min;  // us starter?

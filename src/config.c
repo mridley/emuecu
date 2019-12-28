@@ -7,6 +7,7 @@
 #include "injection.h"
 #include "log.h"
 #include "ecu.h"
+#include "timers.h"
 
 extern emustatus_t status;
 
@@ -60,6 +61,7 @@ void config_defaults()
   config.inj_open = 900;
   config.inj_close = 650;
   config.inj_flow = 38;
+  config.thr_src = THROTTLE_SOURCE_JSON;
 
   memcpy_P(config.a0cal, atab0, sizeof(config.a0cal));
   memcpy_P(config.a1cal, atab1, sizeof(config.a1cal));
@@ -123,6 +125,7 @@ static const struct ctable {
     { "thr_min", CTYPE_UINT16, &config.thr_min },
     { "thr_start", CTYPE_UINT16, &config.thr_start },
     { "thr_max", CTYPE_UINT16, &config.thr_max },
+    { "thr_src", CTYPE_UINT8, &config.thr_src },
     { "pwm0_min", CTYPE_UINT16, &config.pwm0_min },
     { "pwm0_max", CTYPE_UINT16, &config.pwm0_max },
     { "pwm1_min", CTYPE_UINT16, &config.pwm1_min },
@@ -141,7 +144,7 @@ static const struct ctable {
     { "a1cal", CTYPE_INT16_ARRAY, &config.a1cal[0], ARRAY_LEN(config.a1cal) },
     { "ign_adv", CTYPE_INT16_ARRAY, &config.ign_adv[0], ARRAY_LEN(config.ign_adv) },
     { "inj_map", CTYPE_UINT16_2D_ARRAY, &config.inj_map[0][0], ARRAY_LEN(config.inj_map), ARRAY_LEN(config.inj_map[0]) },
-    { "thr_over", CTYPE_INT16, &status.throttle_override },
+    { "thr_over", CTYPE_UINT16, &status.throttle_override },
 };
 
 #define CONFIG_TABLE_LEN ARRAY_LEN(config_table)
@@ -284,7 +287,12 @@ void config_set(char *name, const char *value)
                 return;
             case CTYPE_UINT16:
                 *(uint16_t *)c.ptr = strtoul(value, NULL, 10);
-                config_show(name);
+                if (c.ptr == (void *)&status.throttle_override) {
+                    // special handling for throttle override. Note time, and don't show
+                    status.throttle_set_ms = ticks_ms();
+                } else {
+                    config_show(name);
+                }
                 return;
             case CTYPE_INT16:
                 *(int16_t *)c.ptr = strtol(value, NULL, 10);

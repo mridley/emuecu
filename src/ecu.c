@@ -80,7 +80,7 @@ void default_state()
   status.baro = BARO_MSLP_PA;
   status.pwm0_out = config.pwm0_min;
   status.pwm1_out = config.pwm1_min;
-  status.throttle_override = -1;
+  status.throttle_override = 0;
 }
 
 /*
@@ -167,10 +167,53 @@ static void check_input(void)
 
 static uint16_t get_throttle_in()
 {
-    if (status.throttle_override >= 0) {
-        return status.throttle_override;
+    uint16_t ret = 0;
+    if (config.thr_src == THROTTLE_SOURCE_JSON) {
+        uint16_t now = ticks_ms();
+        if (now - status.throttle_set_ms > 1000) {
+            // no throttle for 1s, disable
+            status.throttle_override = 0;
+            status.throttle_set_ms = 0;
+        }
+        ret = status.throttle_override;
+    } else {
+        ret = pwm_input();
     }
-    return pwm_input();
+    if (ret < 1000 && status.state != INIT) {
+        status.state = INIT;
+        logmsgf("engine re-init");
+    }
+    return ret;
+}
+
+/*
+  return true if throttle input is at a level that is requesting motor
+  start
+*/
+static bool throttle_should_start()
+{
+    if (config.thr_src == THROTTLE_SOURCE_JSON) {
+        // we don't use THR_START as threshold when using JSON
+        // throttle
+        return status.thr_in > 1000;
+    } else if (config.thr_src == THROTTLE_SOURCE_PWM) {
+        return status.thr_in > config.thr_start;
+    }
+    return false;
+}
+
+/*
+  return true if throttle input is at a level that we should come out of init
+  and go into PRIME
+*/
+static bool throttle_should_prime()
+{
+    if (config.thr_src == THROTTLE_SOURCE_JSON) {
+        return status.thr_in > 0;
+    } else if (config.thr_src == THROTTLE_SOURCE_PWM) {
+        return status.thr_in > 0 && status.thr_in < config.thr_start;
+    }
+    return false;
 }
 
 int main(void)
@@ -278,8 +321,7 @@ int main(void)
     {
     case INIT:
       if ((status.pt_c > 0.0) &&
-          (status.thr_in > 0) &&
-          (status.thr_in < config.thr_start)) {
+          throttle_should_prime()) {
         status.engine_prime_ms = ticks_ms();
         pump_enable();
         logmsgf("engine prime");
@@ -295,8 +337,7 @@ int main(void)
       break;
     case STOPPED:
       if ((ms - status.engine_stop_ms) > config.dwell_time_ms) {
-        if (config.auto_start &&
-            (status.thr_in < config.thr_start)) {
+        if (config.auto_start && !throttle_should_start()) {
           status.starts = 0;
         }
         if ((status.rpm > 0) &&
@@ -307,7 +348,7 @@ int main(void)
           logmsgf("engine start");
           status.state = START;
         } else if (config.auto_start &&
-                   (status.thr_in > config.thr_start) &&
+                   throttle_should_start() &&
                    (status.starts < config.auto_start)) {
           status.starts++;
           status.engine_start_ms = ticks_ms();
